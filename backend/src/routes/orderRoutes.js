@@ -10,7 +10,8 @@ const {
   updateStatus,
   getRevenueByMonth,
   getRevenueByYear,
-  getRevenueByCategory
+  getRevenueByCategory,
+  deleteOrder
 } = require('../controllers/orderController');
 
 //Order
