@@ -12,7 +12,7 @@ const VerifyOTP = () => {
   const [otp, setOtp] = useState("");
 
   const handleVerify = () => {
-    fetch("http://localhost:3000/api/auth/verify", {
+    fetch("http://my-app-production-f477.up.railway.app/api/auth/verify", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

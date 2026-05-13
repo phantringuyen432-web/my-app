@@ -19,7 +19,7 @@ const Register = () => {
   };
 
   const handleRegister = () => {
-  fetch("http://localhost:3000/api/auth/register", {
+  fetch("http://my-app-production-f477.up.railway.app/api/auth/register", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"

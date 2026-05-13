@@ -31,7 +31,7 @@ const AddProduct = () => {
 
   // load category
   useEffect(() => {
-    fetch("http://localhost:3000/api/category")
+    fetch("http://my-app-production-f477.up.railway.app/api/category")
       .then(res => res.json())
       .then(data => setCategories(data));
   }, []);
@@ -107,7 +107,7 @@ const AddProduct = () => {
       );
 
       const res = await fetch(
-        "http://localhost:3000/api/product/add",
+        "http://my-app-production-f477.up.railway.app/api/product/add",
         {
           method: "POST",
           body: formData

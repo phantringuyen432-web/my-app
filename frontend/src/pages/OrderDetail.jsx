@@ -6,7 +6,7 @@ const OrderDetail = () => {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/api/order/${id}`)
+    fetch(`http://my-app-production-f477.up.railway.app/api/order/${id}`)
       .then(res => res.json())
       .then(data => setItems(data));
   }, [id]);
@@ -33,7 +33,7 @@ const OrderDetail = () => {
             >
               <div className="flex items-center gap-4">
                 <img
-                  src={`http://localhost:3000/uploads/${item.image}`}
+                  src={`http://my-app-production-f477.up.railway.app/uploads/${item.image}`}
                   alt={item.name}
                   className="w-16 h-16 object-cover rounded"
                 />

@@ -15,7 +15,7 @@ const Shop = ({ addToCart }) => {
   // fetch categories
   useEffect(() => {
 
-    fetch("http://localhost:3000/api/category")
+    fetch("http://my-app-production-f477.up.railway.app/api/category")
       .then(res => res.json())
       .then(data => setCategories(data));
 
@@ -24,7 +24,7 @@ const Shop = ({ addToCart }) => {
   // fetch products
   useEffect(() => {
 
-    let url = "http://localhost:3000/api/product";
+    let url = "http://my-app-production-f477.up.railway.app/api/product";
 
     if (selectedCategory) {
       url += `?category=${selectedCategory}`;
@@ -193,7 +193,7 @@ const Shop = ({ addToCart }) => {
 
               {/* IMAGE */}
               <img
-                src={`http://localhost:3000/uploads/${p.image}`}
+                src={`http://my-app-production-f477.up.railway.app/uploads/${p.image}`}
                 alt={p.name}
                 className="h-56 w-full object-cover"
               />

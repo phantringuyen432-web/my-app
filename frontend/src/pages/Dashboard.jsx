@@ -17,11 +17,11 @@ const Dashboard = () => {
   const [yearData, setYearData] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/order/revenue/month/2026")
+    fetch("http://my-app-production-f477.up.railway.app/api/order/revenue/month/2026")
       .then(res => res.json())
       .then(data => setMonthData(data));
 
-    fetch("http://localhost:3000/api/order/revenue/year")
+    fetch("http://my-app-production-f477.up.railway.app/api/order/revenue/year")
       .then(res => res.json())
       .then(data => setYearData(data));
   }, []);
