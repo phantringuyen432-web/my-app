@@ -1,7 +1,5 @@
 const db = require("../config/db");
 
-
-
 // TẠO ĐƠN HÀNG
 exports.createOrder = (req, res) => {
 
@@ -352,17 +350,26 @@ exports.getRevenueByCategory = (req, res) => {
 
     GROUP BY c.id
   `;
-
   db.query(sql, (err, results) => {
-
     if (err) {
-
       return res.status(500).json(err);
-
     }
-
     res.json(results);
-
   });
+};
+//Xóa đơn hàng
+exports.deleteOrder = (req, res) => {
+  const id = req.params.id;
 
+  db.query(
+    "DELETE FROM orders WHERE id = ?",
+    [id],
+    (err) => {
+      if (err) {
+        return res.status(500).json(err);
+      }
+
+      res.json({ message: "Đã xóa đơn hàng" });
+    }
+  );
 };

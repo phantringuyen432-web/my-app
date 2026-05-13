@@ -5,13 +5,14 @@ const Admin = () => {
   const [orders, setOrders] = useState([]);
   const user = JSON.parse(localStorage.getItem("user"));
 
-    if (!user || user.role !== "admin") {
-        return (
-            <h1 className="text-center mt-10 text-red-500">
-            Không có quyền truy cập
-            </h1>
-        );
-    }
+  if (!user || user.role !== "admin") {
+    return (
+      <h1 className="text-center mt-10 text-red-500">
+        Không có quyền truy cập
+      </h1>
+    );
+  }
+
   // load danh sách đơn
   const fetchOrders = () => {
     fetch("https://my-app-production-f477.up.railway.app/api/order/admin/all")
@@ -33,57 +34,86 @@ const Admin = () => {
       .then(res => res.json())
       .then(() => {
         alert("Đã cập nhật!");
-        fetchOrders(); // reload
+        fetchOrders();
+      });
+  };
+
+  // xóa đơn hàng
+  const deleteOrder = (id) => {
+    const confirmDelete = window.confirm(
+      "Đơn hàng đã giao xong. Bạn có muốn xóa không?"
+    );
+
+    if (!confirmDelete) return;
+
+    fetch(`https://my-app-production-f477.up.railway.app/api/order/${id}`, {
+      method: "DELETE"
+    })
+      .then(res => res.json())
+      .then(() => {
+        alert("Đã xóa đơn hàng!");
+        fetchOrders();
       });
   };
 
   const location = useLocation();
 
-return (
-  <div className="flex min-h-screen bg-gray-100">
+  return (
+    <div className="flex min-h-screen bg-gray-100">
 
-    {/* CONTENT */}
-    <div className="flex-1 p-10">
-      <h1 className="text-3xl font-bold mb-6">
-        Quản lý đơn hàng
-      </h1>
+      {/* CONTENT */}
+      <div className="flex-1 p-10">
+        <h1 className="text-3xl font-bold mb-6">
+          Quản lý đơn hàng
+        </h1>
 
-      <div className="bg-white rounded-xl shadow p-6">
-        {orders.map(order => (
-          <div
-            key={order.id}
-            className="border-b py-4 flex justify-between items-center"
-          >
-            <div>
-              <p>🆔 #{order.id}</p>
-              <p>👤 {order.username}</p>
-              <p>💰 {order.total.toLocaleString()} VND</p>
-              <p>📌 {order.status}</p>
+        <div className="bg-white rounded-xl shadow p-6">
+          {orders.map(order => (
+            <div
+              key={order.id}
+              className="border-b py-4 flex justify-between items-center"
+            >
+              <div>
+                <p>🆔 #{order.id}</p>
+                <p>👤 {order.username}</p>
+                <p>💰 {order.total.toLocaleString()} VND</p>
+                <p>📌 {order.status}</p>
+              </div>
+
+              <div className="flex gap-2 items-center">
+
+                {order.status === "pending" && (
+                  <button
+                    onClick={() => updateStatus(order.id, "paid")}
+                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded transition"
+                  >
+                    Xác nhận thanh toán
+                  </button>
+                )}
+
+                {order.status === "paid" && (
+                  <>
+                    <span className="text-green-600 font-semibold">
+                      ✔ Đã giao xong
+                    </span>
+
+                    <button
+                      onClick={() => deleteOrder(order.id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"
+                    >
+                      Xóa đơn
+                    </button>
+                  </>
+                )}
+
+              </div>
             </div>
-
-            <div className="flex gap-2">
-              {order.status === "pending" && (
-                <button
-                  onClick={() => updateStatus(order.id, "paid")}
-                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded transition"
-                >
-                  Xác nhận thanh toán
-                </button>
-              )}
-
-              {order.status === "paid" && (
-                <span className="text-green-600 font-semibold">
-                  ✔ Đã thanh toán
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
 
-  </div>
-);
+    </div>
+  );
 };
 
 export default Admin;

@@ -24,5 +24,6 @@ router.put('/:id', updateStatus);
 router.get("/revenue/month/:year", getRevenueByMonth);
 router.get("/revenue/year", getRevenueByYear);
 router.get("/revenue/category", getRevenueByCategory);
+router.delete("/:id", deleteOrder);
 
 module.exports = router;
