@@ -14,7 +14,7 @@ const Admin = () => {
     }
   // load danh sách đơn
   const fetchOrders = () => {
-    fetch("http://my-app-production-f477.up.railway.app/api/order/admin/all")
+    fetch("https://my-app-production-f477.up.railway.app/api/order/admin/all")
       .then(res => res.json())
       .then(data => setOrders(data));
   };
