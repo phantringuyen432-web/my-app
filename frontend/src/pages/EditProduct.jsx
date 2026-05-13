@@ -23,7 +23,7 @@ const EditProduct = () => {
   // load categories
   useEffect(() => {
 
-    fetch("http://my-app-production-f477.up.railway.app/api/category")
+    fetch("https://my-app-production-f477.up.railway.app/api/category")
       .then(res => res.json())
       .then(data => setCategories(data));
 
@@ -32,7 +32,7 @@ const EditProduct = () => {
   // load product detail
   useEffect(() => {
 
-    fetch(`http://my-app-production-f477.up.railway.app/api/product/${id}`)
+    fetch(`https://my-app-production-f477.up.railway.app/api/product/${id}`)
       .then(res => res.json())
       .then(data => {
         const product = data.product;
@@ -43,7 +43,7 @@ const EditProduct = () => {
           description: product.description || ""
         });
         setVariants(data.variants || []);
-        setPreview(`http://my-app-production-f477.up.railway.app/uploads/${product.image}`);
+        setPreview(`https://my-app-production-f477.up.railway.app/uploads/${product.image}`);
       });
   }, [id]);
 
@@ -111,7 +111,7 @@ const EditProduct = () => {
       formData.append("image", image);
     }
 
-    fetch(`http://my-app-production-f477.up.railway.app/api/product/${id}`, {
+    fetch(`https://my-app-production-f477.up.railway.app/api/product/${id}`, {
       method: "PUT",
       body: formData
     })

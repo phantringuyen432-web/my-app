@@ -6,7 +6,7 @@ const ProductList = () => {
   const navigate = useNavigate();
 
   const fetchProducts = () => {
-    fetch("http://my-app-production-f477.up.railway.app/api/product")
+    fetch("https://my-app-production-f477.up.railway.app/api/product")
       .then(res => res.json())
       .then(data => setProducts(data));
   };
@@ -18,7 +18,7 @@ const ProductList = () => {
   const handleDelete = (id) => {
     if (!window.confirm("Xóa sản phẩm này?")) return;
 
-    fetch(`http://my-app-production-f477.up.railway.app/api/product/${id}`, {
+    fetch(`https://my-app-production-f477.up.railway.app/api/product/${id}`, {
       method: "DELETE"
     })
       .then(() => {
@@ -41,7 +41,7 @@ const ProductList = () => {
           >
             <div className="flex items-center gap-4">
               <img
-                src={`http://my-app-production-f477.up.railway.app/uploads/${p.image}`}
+                src={`https://my-app-production-f477.up.railway.app/uploads/${p.image}`}
                 className="w-16 h-16 object-cover rounded"
               />
               <div>

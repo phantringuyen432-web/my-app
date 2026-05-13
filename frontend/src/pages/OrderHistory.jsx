@@ -14,7 +14,7 @@ const OrderHistory = () => {
       navigate("/login");
       return;
     }
-    fetch(`http://my-app-production-f477.up.railway.app/api/order/user/${user.id}`)
+    fetch(`https://my-app-production-f477.up.railway.app/api/order/user/${user.id}`)
       .then(res => res.json())
       .then(data => setOrders(data));
   }, []);

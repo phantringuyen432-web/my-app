@@ -60,7 +60,7 @@ const Checkout = ({ cart, setCart }) => {
 
     }));
 
-    fetch("http://my-app-production-f477.up.railway.app/api/order", {
+    fetch("https://my-app-production-f477.up.railway.app/api/order", {
 
       method: "POST",
 
@@ -144,7 +144,7 @@ const Checkout = ({ cart, setCart }) => {
               <div className="flex items-center gap-4">
 
                 <img
-                  src={`http://my-app-production-f477.up.railway.app/uploads/${item.image}`}
+                  src={`https://my-app-production-f477.up.railway.app/uploads/${item.image}`}
                   alt={item.name}
                   className="w-20 h-20 object-cover rounded-xl"
                 />

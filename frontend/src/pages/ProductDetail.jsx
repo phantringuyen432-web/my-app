@@ -16,7 +16,7 @@ const ProductDetail = ({ addToCart }) => {
   // load product detail
   useEffect(() => {
 
-    fetch(`http://my-app-production-f477.up.railway.app/api/product/${id}`)
+    fetch(`https://my-app-production-f477.up.railway.app/api/product/${id}`)
       .then(res => res.json())
       .then(data => {
 
@@ -74,7 +74,7 @@ const ProductDetail = ({ addToCart }) => {
         <div>
 
           <img
-            src={`http://my-app-production-f477.up.railway.app/uploads/${product.image}`}
+            src={`https://my-app-production-f477.up.railway.app/uploads/${product.image}`}
             alt={product.name}
             className="w-full h-[500px] object-cover rounded-2xl"
           />

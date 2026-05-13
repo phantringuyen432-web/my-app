@@ -18,7 +18,7 @@ const Login = () => {
   };
 
   const handleLogin = () => {
-    fetch("http://my-app-production-f477.up.railway.app/api/auth/login", {
+    fetch("https://my-app-production-f477.up.railway.app/api/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

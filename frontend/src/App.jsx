@@ -86,7 +86,7 @@ function App() {
   };
 
   useEffect(() => {
-    fetch("http://my-app-production-f477.up.railway.app/api/product")// trùng với dòng bên backend index.js
+    fetch("https://my-app-production-f477.up.railway.app/api/product")// trùng với dòng bên backend index.js
       .then(res => res.json())
       .then(data => setProducts(data));
   }, []);

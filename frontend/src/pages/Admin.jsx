@@ -25,7 +25,7 @@ const Admin = () => {
 
   // update trạng thái
   const updateStatus = (id, status) => {
-    fetch(`http://my-app-production-f477.up.railway.app/api/order/${id}`, {
+    fetch(`https://my-app-production-f477.up.railway.app/api/order/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status })
