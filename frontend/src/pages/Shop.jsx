@@ -193,7 +193,7 @@ const Shop = ({ addToCart }) => {
 
               {/* IMAGE */}
               <img
-                src={`https://my-app-production-f477.up.railway.app/uploads/${p.image}`}
+                src={product.image}
                 alt={p.name}
                 className="h-56 w-full object-cover"
               />

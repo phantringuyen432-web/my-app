@@ -41,7 +41,7 @@ const ProductList = () => {
           >
             <div className="flex items-center gap-4">
               <img
-                src={`https://my-app-production-f477.up.railway.app/uploads/${p.image}`}
+                src={product.image}
                 className="w-16 h-16 object-cover rounded"
               />
               <div>

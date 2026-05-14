@@ -43,7 +43,7 @@ const EditProduct = () => {
           description: product.description || ""
         });
         setVariants(data.variants || []);
-        setPreview(`https://my-app-production-f477.up.railway.app/uploads/${product.image}`);
+        setPreview(product.image);
       });
   }, [id]);
 

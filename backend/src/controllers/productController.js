@@ -43,7 +43,7 @@ exports.addProduct = (req, res) => {
       variants
     } = req.body;
 
-    const image = req.file.filename;
+    const image = req.file.path;
 
     // insert product
     db.query(

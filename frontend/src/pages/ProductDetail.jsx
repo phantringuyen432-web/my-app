@@ -74,7 +74,7 @@ const ProductDetail = ({ addToCart }) => {
         <div>
 
           <img
-            src={`https://my-app-production-f477.up.railway.app/uploads/${product.image}`}
+            src={product.image}
             alt={product.name}
             className="w-full h-[500px] object-cover rounded-2xl"
           />
