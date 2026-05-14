@@ -144,7 +144,7 @@ const Checkout = ({ cart, setCart }) => {
               <div className="flex items-center gap-4">
 
                 <img
-                  src={product.image}
+                  src={item.image}
                   alt={item.name}
                   className="w-20 h-20 object-cover rounded-xl"
                 />

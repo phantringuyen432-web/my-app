@@ -41,7 +41,7 @@ const ProductList = () => {
           >
             <div className="flex items-center gap-4">
               <img
-                src={product.image}
+                src={p.image}
                 className="w-16 h-16 object-cover rounded"
               />
               <div>
