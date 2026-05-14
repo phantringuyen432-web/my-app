@@ -182,7 +182,7 @@ exports.updateProduct = (req, res) => {
   let image = null;
 
   if (req.file) {
-    image = req.file.filename;
+    image = req.file.path;
   }
 
   // query update product

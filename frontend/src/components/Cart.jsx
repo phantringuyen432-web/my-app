@@ -84,7 +84,7 @@ const Cart = ({ cart, setCart }) => {
 
                 {/* IMAGE */}
                 <img
-                  src={`https://my-app-production-f477.up.railway.app/uploads/${item.image}`}
+                  src={p.image}
                   alt={item.name}
                   className="w-20 h-20 object-cover rounded-xl"
                 />
