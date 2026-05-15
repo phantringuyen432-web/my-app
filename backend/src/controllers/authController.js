@@ -1,7 +1,8 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const transporter = require("../config/mail");
+
+const sendOTP = require("../config/mail");
 
 // ============================
 // REGISTER + GỬI OTP
@@ -16,6 +17,25 @@ exports.register = async (req, res) => {
       password
     } = req.body;
 
+    // kiểm tra email tồn tại
+    const checkUser = await db.query(
+      `
+      SELECT *
+      FROM users
+      WHERE email = $1
+      `,
+      [email]
+    );
+
+    if (checkUser.rows.length > 0) {
+
+      return res.status(400).json({
+        message: "Email đã tồn tại"
+      });
+
+    }
+
+    // hash password
     const hashed = await bcrypt.hash(password, 10);
 
     // tạo OTP
@@ -23,6 +43,7 @@ exports.register = async (req, res) => {
       100000 + Math.random() * 900000
     ).toString();
 
+    // hết hạn 5 phút
     const expire = new Date(
       Date.now() + 5 * 60 * 1000
     );
@@ -50,16 +71,8 @@ exports.register = async (req, res) => {
       ]
     );
 
-    // gửi email
-    await transporter.sendMail({
-
-      to: email,
-
-      subject: "Mã OTP xác thực",
-
-      text: `Mã OTP của bạn là: ${otp}`
-
-    });
+    // gửi OTP bằng Brevo API
+    await sendOTP(email, otp);
 
     res.json({
 
@@ -129,7 +142,7 @@ exports.verifyOTP = async (req, res) => {
 
     }
 
-    // update verified
+    // cập nhật verified
     await db.query(
       `
       UPDATE users
@@ -147,7 +160,9 @@ exports.verifyOTP = async (req, res) => {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 
@@ -158,61 +173,83 @@ exports.verifyOTP = async (req, res) => {
 // ============================
 exports.login = async (req, res) => {
 
-  const { email, password } = req.body;
-
   try {
 
+    const {
+      email,
+      password
+    } = req.body;
+
     const results = await db.query(
-      "SELECT * FROM users WHERE email = $1",
+      `
+      SELECT *
+      FROM users
+      WHERE email = $1
+      `,
       [email]
     );
 
     if (results.rows.length === 0) {
+
       return res.status(400).json({
         message: "Sai email"
       });
+
     }
 
     const user = results.rows[0];
 
-    // kiểm tra verify
+    // chưa verify
     if (!user.is_verified) {
+
       return res.status(400).json({
         message: "Vui lòng xác thực email trước"
       });
+
     }
 
-    // compare bcrypt
+    // kiểm tra password
     const match = await bcrypt.compare(
       password,
       user.password
     );
 
     if (!match) {
+
       return res.status(400).json({
         message: "Sai mật khẩu"
       });
+
     }
 
+    // tạo token
     const token = jwt.sign(
+
       {
         id: user.id,
         role: user.role
       },
+
       "SECRET_KEY",
+
       {
         expiresIn: "1d"
       }
+
     );
 
     res.json({
+
       message: "Đăng nhập thành công",
+
       token,
+
       user: {
         id: user.id,
         username: user.username,
         role: user.role
       }
+
     });
 
   } catch (err) {

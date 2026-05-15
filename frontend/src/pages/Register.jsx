@@ -1,117 +1,210 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Register = () => {
+
   const [form, setForm] = useState({
+
     username: "",
     email: "",
     password: ""
+
   });
+
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
+  // =========================
+  // HANDLE CHANGE
+  // =========================
   const handleChange = (e) => {
+
     setForm({
+
       ...form,
+
       [e.target.name]: e.target.value
+
     });
+
   };
 
- const handleRegister = async () => {
+  // =========================
+  // HANDLE REGISTER
+  // =========================
+  const handleRegister = async () => {
 
-  try {
+    // validate
+    if (
+      !form.username ||
+      !form.email ||
+      !form.password
+    ) {
 
-    const res = await fetch(
-      "https://my-app-ne36.onrender.com/api/auth/register",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify(form)
-      }
-    );
-
-    const data = await res.json();
-
-    console.log(data);
-
-    // nếu lỗi
-    if (!res.ok) {
-
-      alert(data.message || "Đăng ký thất bại");
+      alert("Vui lòng nhập đầy đủ thông tin");
 
       return;
+
     }
 
-    alert(data.message);
+    try {
 
-    // thành công mới chuyển trang
-    navigate("/verify", {
-      state: {
-        email: form.email
+      setLoading(true);
+
+      const res = await fetch(
+
+        "https://my-app-ne36.onrender.com/api/auth/register",
+
+        {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify(form)
+
+        }
+
+      );
+
+      const data = await res.json();
+
+      console.log(data);
+
+      // lỗi từ server
+      if (!res.ok) {
+
+        alert(data.message || "Đăng ký thất bại");
+
+        setLoading(false);
+
+        return;
+
       }
-    });
 
-  } catch (err) {
+      // thành công
+      alert(data.message);
 
-    console.log(err);
+      navigate("/verify", {
 
-    alert("Lỗi kết nối server");
+        state: {
+          email: form.email
+        }
 
-  }
+      });
 
-};
+    } catch (err) {
+
+      console.log(err);
+
+      alert("Không thể kết nối server");
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-6 rounded-xl shadow w-80">
-        <h2 className="text-xl font-bold mb-4 text-center">Đăng ký</h2>
 
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+
+      <div className="bg-white p-6 rounded-xl shadow w-80">
+
+        <h2 className="text-xl font-bold mb-4 text-center">
+          Đăng ký
+        </h2>
+
+        {/* USERNAME */}
         <input
           name="username"
           placeholder="Username"
           className="w-full mb-2 p-2 border rounded"
+          value={form.username}
           onChange={handleChange}
         />
 
+        {/* EMAIL */}
         <input
           name="email"
+          type="email"
           placeholder="Email"
           className="w-full mb-2 p-2 border rounded"
+          value={form.email}
           onChange={handleChange}
         />
 
+        {/* PASSWORD */}
         <input
           name="password"
           type="password"
           placeholder="Password"
           className="w-full mb-4 p-2 border rounded"
+          value={form.password}
           onChange={handleChange}
         />
-        <div className="text-center mb-2">
-            <Link
-                to="/login"
-                className="text-gray-600 text-sm hover:text-blue-600 transition"
-            >
-                Đã có tài khoản {" "}
-                <span className="font-semibold text-blue-500 hover:underline">
-                    Đăng nhập ngay
-                </span>
-            </Link>
+
+        {/* LOGIN LINK */}
+        <div className="text-center mb-3">
+
+          <Link
+            to="/login"
+            className="text-gray-600 text-sm hover:text-blue-600 transition"
+          >
+
+            Đã có tài khoản?{" "}
+
+            <span className="font-semibold text-blue-500 hover:underline">
+              Đăng nhập ngay
+            </span>
+
+          </Link>
+
         </div>
+
+        {/* BUTTON */}
         <button
+
           onClick={handleRegister}
-          className="w-full bg-blue-500 text-white py-2 rounded"
+
+          disabled={loading}
+
+          className={`
+
+            w-full
+            text-white
+            py-2
+            rounded
+
+            ${
+              loading
+                ? "bg-gray-400"
+                : "bg-blue-500 hover:bg-blue-600"
+            }
+
+          `}
+
         >
-          Đăng ký
+
+          {
+            loading
+              ? "Đang đăng ký..."
+              : "Đăng ký"
+          }
+
         </button>
+
       </div>
+
     </div>
+
   );
+
 };
 
 export default Register;

@@ -1,34 +1,33 @@
-const nodemailer = require("nodemailer");
+const SibApiV3Sdk = require("sib-api-v3-sdk");
 
-console.log("MAIL FILE LOADED");
+const client = SibApiV3Sdk.ApiClient.instance;
 
-const transporter = nodemailer.createTransport({
+client.authentications["api-key"].apiKey =
+  process.env.BREVO_API_KEY;
 
-  host: "smtp-relay.brevo.com",
+const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
-  port: 587,
+const sendOTP = async (to, otp) => {
 
-  secure: false,
+  return await apiInstance.sendTransacEmail({
 
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS
-  }
+    sender: {
+      email: "phantringuyen432@gmail.com",
+      name: "SHOP"
+    },
 
-});
+    to: [
+      {
+        email: to
+      }
+    ],
 
-transporter.verify(function (error, success) {
+    subject: "Mã OTP xác thực",
 
-  if (error) {
+    textContent: `Mã OTP của bạn là: ${otp}`
 
-    console.log("MAIL ERROR:", error);
+  });
 
-  } else {
+};
 
-    console.log("MAIL READY");
-
-  }
-
-});
-
-module.exports = transporter;
+module.exports = sendOTP;
