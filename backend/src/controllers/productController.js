@@ -205,6 +205,9 @@ exports.updateProduct = async (req, res) => {
 
   try {
 
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
+
     const id = req.params.id;
 
     const {
@@ -221,7 +224,7 @@ exports.updateProduct = async (req, res) => {
       image = req.file.path;
     }
 
-    // update product
+    // UPDATE PRODUCT
     if (image) {
 
       await db.query(
@@ -268,7 +271,7 @@ exports.updateProduct = async (req, res) => {
 
     }
 
-    // delete old variants
+    // DELETE OLD VARIANTS
     await db.query(
       `
       DELETE FROM product_variants
@@ -277,12 +280,16 @@ exports.updateProduct = async (req, res) => {
       [id]
     );
 
-    // insert new variants
+    // PARSE VARIANTS
     let parsedVariants = [];
+
     if (variants) {
+
       parsedVariants = JSON.parse(variants);
+
     }
 
+    // INSERT NEW VARIANTS
     for (const v of parsedVariants) {
 
       await db.query(
@@ -307,9 +314,11 @@ exports.updateProduct = async (req, res) => {
 
   } catch (err) {
 
-    console.log(err);
+    console.log("UPDATE ERROR:", err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: err.message
+    });
 
   }
 
