@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+const [search, setSearch] = useState("");
 
 const Shop = ({ addToCart }) => {
 
@@ -190,7 +191,35 @@ useEffect(() => {
           ))}
 
         </div>
+        {/* Tìm kiếm */}
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Tìm sản phẩm..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full border p-3 rounded-xl"
+          />
+        </div>
 
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+
+          {products
+            .filter((p) =>
+              p.name
+                .toLowerCase()
+                .includes(search.toLowerCase())
+            )
+            .map((p) => (
+
+              <ProductCard
+                key={p.id}
+                product={p}
+              />
+
+          ))}
+
+        </div>
         {/* PRODUCTS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
