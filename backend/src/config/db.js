@@ -7,12 +7,18 @@ const pool = new Pool({
   },
 });
 
-pool.connect((err) => {
-  if (err) {
-    console.log("PostgreSQL connection failed:", err);
-  } else {
+// Test connection
+pool.connect()
+  .then(() => {
     console.log("PostgreSQL connected");
-  }
+  })
+  .catch((err) => {
+    console.log("PostgreSQL connection failed:", err);
+  });
+
+// Prevent app crash
+pool.on("error", (err) => {
+  console.error("Unexpected PostgreSQL error", err);
 });
 
 module.exports = pool;
