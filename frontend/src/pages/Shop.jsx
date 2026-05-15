@@ -1,9 +1,8 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-const [search, setSearch] = useState("");
 
 const Shop = ({ addToCart }) => {
-
+  const [search, setSearch] = useState("");
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [products, setProducts] = useState([]);
