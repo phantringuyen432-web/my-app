@@ -158,56 +158,42 @@ exports.verifyOTP = async (req, res) => {
 // ============================
 exports.login = async (req, res) => {
 
+  const { email, password } = req.body;
+
   try {
 
-    const {
-      email,
-      password
-    } = req.body;
-
-    const result = await db.query(
-      `
-      SELECT *
-      FROM users
-      WHERE email = $1
-      `,
+    const results = await db.query(
+      "SELECT * FROM users WHERE email = $1",
       [email]
     );
 
-    if (result.rows.length === 0) {
-
+    if (results.rows.length === 0) {
       return res.status(400).json({
         message: "Sai email"
       });
-
     }
 
-    const user = result.rows[0];
+    const user = results.rows[0];
 
-    // chưa verify
+    // kiểm tra verify
     if (!user.is_verified) {
-
       return res.status(400).json({
         message: "Vui lòng xác thực email trước"
       });
-
     }
 
-    // check password
+    // compare bcrypt
     const match = await bcrypt.compare(
       password,
       user.password
     );
 
     if (!match) {
-
       return res.status(400).json({
         message: "Sai mật khẩu"
       });
-
     }
 
-    // token
     const token = jwt.sign(
       {
         id: user.id,
@@ -220,28 +206,22 @@ exports.login = async (req, res) => {
     );
 
     res.json({
-
       message: "Đăng nhập thành công",
-
       token,
-
       user: {
-
         id: user.id,
-
         username: user.username,
-
         role: user.role
-
       }
-
     });
 
   } catch (err) {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 
