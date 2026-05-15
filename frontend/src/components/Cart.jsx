@@ -84,7 +84,7 @@ const Cart = ({ cart, setCart }) => {
 
                 {/* IMAGE */}
                 <img
-                  src={p.image}
+                  src={item.image}
                   alt={item.name}
                   className="w-20 h-20 object-cover rounded-xl"
                 />
