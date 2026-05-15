@@ -2,9 +2,13 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const Shop = ({ addToCart }) => {
+
   const [search, setSearch] = useState("");
+
   const [categories, setCategories] = useState([]);
+
   const [selectedCategory, setSelectedCategory] = useState(null);
+
   const [products, setProducts] = useState([]);
 
   // pagination
@@ -22,44 +26,52 @@ const Shop = ({ addToCart }) => {
   }, []);
 
   // fetch products
-useEffect(() => {
+  useEffect(() => {
 
-  let url = "https://my-app-ne36.onrender.com/api/product";
+    let url =
+      "https://my-app-ne36.onrender.com/api/product";
 
-  if (selectedCategory) {
-    url += `?category=${selectedCategory}`;
-  }
+    if (selectedCategory) {
+      url += `?category=${selectedCategory}`;
+    }
 
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
 
-      console.log(data);
+        console.log(data);
 
-      // đảm bảo luôn là array
-      if (Array.isArray(data)) {
-        setProducts(data);
-      } else {
+        if (Array.isArray(data)) {
+          setProducts(data);
+        } else {
+          setProducts([]);
+        }
+
+        setCurrentPage(1);
+
+      })
+      .catch(err => {
+
+        console.log(err);
+
         setProducts([]);
-      }
 
-      setCurrentPage(1);
+      });
 
-    })
-    .catch(err => {
-      console.log(err);
-      setProducts([]);
-    });
+  }, [selectedCategory]);
 
-}, [selectedCategory]);
-
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(
+    localStorage.getItem("user")
+  );
 
   const handleAddToCart = (product) => {
 
     if (!user) {
+
       alert("⚠️ Vui lòng đăng nhập!");
+
       return;
+
     }
 
     addToCart(product);
@@ -69,21 +81,29 @@ useEffect(() => {
   const handleLogout = () => {
 
     localStorage.removeItem("user");
+
     localStorage.removeItem("token");
 
     window.location.reload();
 
   };
 
-  // pagination logic
+  // SEARCH FILTER
+  const filteredProducts = products.filter((p) =>
+    p.name
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
+  // PAGINATION
   const totalPages = Math.ceil(
-    products.length / productsPerPage
+    filteredProducts.length / productsPerPage
   );
 
   const startIndex =
     (currentPage - 1) * productsPerPage;
 
-  const currentProducts = products.slice(
+  const currentProducts = filteredProducts.slice(
     startIndex,
     startIndex + productsPerPage
   );
@@ -153,7 +173,9 @@ useEffect(() => {
             )}
 
           </div>
+
         </div>
+
       </div>
 
       {/* CONTENT */}
@@ -165,9 +187,10 @@ useEffect(() => {
           <button
             onClick={() => setSelectedCategory(null)}
             className={`px-5 py-2 rounded-full font-medium shadow-sm transition
-              ${selectedCategory === null
-                ? "bg-blue-500 text-white"
-                : "bg-white hover:bg-gray-100"
+              ${
+                selectedCategory === null
+                  ? "bg-blue-500 text-white"
+                  : "bg-white hover:bg-gray-100"
               }`}
           >
             Tất cả
@@ -177,11 +200,14 @@ useEffect(() => {
 
             <button
               key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
+              onClick={() =>
+                setSelectedCategory(cat.id)
+              }
               className={`px-5 py-2 rounded-full font-medium shadow-sm transition
-                ${selectedCategory === cat.id
-                  ? "bg-blue-500 text-white"
-                  : "bg-white hover:bg-gray-100"
+                ${
+                  selectedCategory === cat.id
+                    ? "bg-blue-500 text-white"
+                    : "bg-white hover:bg-gray-100"
                 }`}
             >
               {cat.name}
@@ -190,35 +216,22 @@ useEffect(() => {
           ))}
 
         </div>
-        {/* Tìm kiếm */}
+
+        {/* SEARCH */}
         <div className="mb-6">
+
           <input
             type="text"
             placeholder="Tìm sản phẩm..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
             className="w-full border p-3 rounded-xl"
           />
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-
-          {products
-            .filter((p) =>
-              p.name
-                .toLowerCase()
-                .includes(search.toLowerCase())
-            )
-            .map((p) => (
-
-              <ProductCard
-                key={p.id}
-                product={p}
-              />
-
-          ))}
 
         </div>
+
         {/* PRODUCTS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
@@ -256,6 +269,7 @@ useEffect(() => {
                 </Link>
 
               </div>
+
             </div>
 
           ))}
@@ -274,9 +288,10 @@ useEffect(() => {
                 setCurrentPage(prev => prev - 1)
               }
               className={`px-5 py-2 rounded-xl font-semibold transition
-                ${currentPage === 1
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600 text-white"
+                ${
+                  currentPage === 1
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-500 hover:bg-blue-600 text-white"
                 }`}
             >
               ← Trước
@@ -294,9 +309,10 @@ useEffect(() => {
                 setCurrentPage(prev => prev + 1)
               }
               className={`px-5 py-2 rounded-xl font-semibold transition
-                ${currentPage === totalPages
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600 text-white"
+                ${
+                  currentPage === totalPages
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-500 hover:bg-blue-600 text-white"
                 }`}
             >
               Tiếp →
@@ -315,6 +331,7 @@ useEffect(() => {
 
           {/* SHOP */}
           <div>
+
             <h2 className="text-2xl font-bold text-white mb-4">
               SHOP
             </h2>
@@ -324,10 +341,12 @@ useEffect(() => {
               hỗ trợ nhiều biến thể sản phẩm như size,
               màu sắc và quản lý tồn kho.
             </p>
+
           </div>
 
           {/* LINKS */}
           <div>
+
             <h3 className="text-xl font-semibold text-white mb-4">
               Liên kết
             </h3>
@@ -362,17 +381,22 @@ useEffect(() => {
               </li>
 
             </ul>
+
           </div>
 
           {/* CONTACT */}
           <div>
+
             <h3 className="text-xl font-semibold text-white mb-4">
               Liên hệ
             </h3>
 
             <p>Email: shop@gmail.com</p>
+
             <p>SĐT: 0123 456 789</p>
+
             <p>Địa chỉ: Việt Nam</p>
+
           </div>
 
         </div>
@@ -387,6 +411,7 @@ useEffect(() => {
     </div>
 
   );
+
 };
 
 export default Shop;
