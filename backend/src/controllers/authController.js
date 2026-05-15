@@ -125,7 +125,7 @@ exports.verifyOTP = async (req, res) => {
     const user = result.rows[0];
 
     // kiểm tra OTP
-    if (user.otp_code !== otp) {
+    if (String(user.otp_code) !== String(otp)) {
 
       return res.status(400).json({
         message: "OTP sai"

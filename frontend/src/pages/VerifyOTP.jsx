@@ -45,7 +45,7 @@ const VerifyOTP = () => {
         <input
           placeholder="Nhập OTP"
           className="w-full mb-4 p-2 border rounded"
-          onChange={(e) => setOtp(e.target.value)}
+          onChange={(e) => setOtp(e.target.value.trim())}
         />
 
         <button
