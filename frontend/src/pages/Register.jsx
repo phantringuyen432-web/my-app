@@ -18,27 +18,52 @@ const Register = () => {
     });
   };
 
-  const handleRegister = () => {
-  fetch("https://my-app-ne36.onrender.com/api/auth/register", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(form)
-  })
-    .then(res => res.json())
-    .then(data => {
-      alert(data.message);
+ const handleRegister = async () => {
 
-      //chỉ chuyển trang khi thành công
-      if (data.message.includes("thành công")) {
-        navigate("/verify", { state: { email: form.email } });
+  try {
+
+    const res = await fetch(
+      "https://my-app-ne36.onrender.com/api/auth/register",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify(form)
       }
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Có lỗi xảy ra!");
+    );
+
+    const data = await res.json();
+
+    console.log(data);
+
+    // nếu lỗi
+    if (!res.ok) {
+
+      alert(data.message || "Đăng ký thất bại");
+
+      return;
+    }
+
+    alert(data.message);
+
+    // thành công mới chuyển trang
+    navigate("/verify", {
+      state: {
+        email: form.email
+      }
     });
+
+  } catch (err) {
+
+    console.log(err);
+
+    alert("Lỗi kết nối server");
+
+  }
+
 };
 
   return (
