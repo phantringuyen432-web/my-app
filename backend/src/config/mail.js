@@ -1,5 +1,7 @@
 const nodemailer = require("nodemailer");
 
+console.log("MAIL FILE LOADED");
+
 const transporter = nodemailer.createTransport({
 
   host: "smtp-relay.brevo.com",
@@ -15,12 +17,16 @@ const transporter = nodemailer.createTransport({
 
 });
 
-transporter.verify((err) => {
+transporter.verify(function (error, success) {
 
-  if (err) {
-    console.log("MAIL ERROR:", err);
+  if (error) {
+
+    console.log("MAIL ERROR:", error);
+
   } else {
+
     console.log("MAIL READY");
+
   }
 
 });
