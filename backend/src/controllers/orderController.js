@@ -1,375 +1,385 @@
 const db = require("../config/db");
 
+// ============================
 // TẠO ĐƠN HÀNG
-exports.createOrder = (req, res) => {
+// ============================
+exports.createOrder = async (req, res) => {
 
-  const {
-    items,
-    total,
-    userId
-  } = req.body;
+  try {
 
-  // validate
-  if (!userId) {
+    const {
+      items,
+      total,
+      userId
+    } = req.body;
 
-    return res.status(400).json({
-      message: "Thiếu userId"
-    });
+    // validate
+    if (!userId) {
 
-  }
-
-  if (!items || items.length === 0) {
-
-    return res.status(400).json({
-      message: "Giỏ hàng trống"
-    });
-
-  }
-
-  // tạo order
-  db.query(
-
-    "INSERT INTO orders (user_id, total) VALUES (?, ?)",
-
-    [userId, total],
-
-    (err, result) => {
-
-      if (err) {
-
-        console.log(err);
-
-        return res.status(500).json(err);
-      }
-
-      const orderId = result.insertId;
-
-      // insert order_items + update stock
-      const queries = items.map(item => {
-
-        return new Promise((resolve, reject) => {
-
-          // insert order item
-          db.query(
-
-            `
-            INSERT INTO order_items
-            (
-              order_id,
-              product_id,
-              variant_id,
-              quantity,
-              price,
-              size,
-              color
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            `,
-
-            [
-              orderId,
-              item.product_id,
-              item.variant_id,
-              item.quantity,
-              item.price,
-              item.size,
-              item.color
-            ],
-
-            (err) => {
-
-              if (err) {
-                reject(err);
-                return;
-              }
-
-              // trừ tồn kho
-              db.query(
-
-                `
-                UPDATE product_variants
-                SET stock = stock - ?
-                WHERE id = ?
-                `,
-
-                [
-                  item.quantity,
-                  item.variant_id
-                ],
-
-                (err2) => {
-
-                  if (err2) {
-                    reject(err2);
-                  } else {
-                    resolve();
-                  }
-
-                }
-              );
-
-            }
-          );
-
-        });
-
+      return res.status(400).json({
+        message: "Thiếu userId"
       });
 
-      // chờ tất cả hoàn thành
-      Promise.all(queries)
+    }
 
-        .then(() => {
+    if (!items || items.length === 0) {
 
-          res.json({
-
-            message: "Đặt hàng thành công",
-
-            orderId
-
-          });
-
-        })
-
-        .catch(err => {
-
-          console.log(err);
-
-          res.status(500).json(err);
-
-        });
+      return res.status(400).json({
+        message: "Giỏ hàng trống"
+      });
 
     }
-  );
+
+    // tạo order
+    const orderResult = await db.query(
+      `
+      INSERT INTO orders
+      (user_id, total)
+      VALUES ($1, $2)
+      RETURNING id
+      `,
+      [userId, total]
+    );
+
+    const orderId = orderResult.rows[0].id;
+
+    // insert order items + update stock
+    for (const item of items) {
+
+      // insert order item
+      await db.query(
+        `
+        INSERT INTO order_items
+        (
+          order_id,
+          product_id,
+          variant_id,
+          quantity,
+          price,
+          size,
+          color
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `,
+        [
+          orderId,
+          item.product_id,
+          item.variant_id,
+          item.quantity,
+          item.price,
+          item.size,
+          item.color
+        ]
+      );
+
+      // update stock
+      await db.query(
+        `
+        UPDATE product_variants
+        SET stock = stock - $1
+        WHERE id = $2
+        `,
+        [
+          item.quantity,
+          item.variant_id
+        ]
+      );
+
+    }
+
+    res.json({
+
+      message: "Đặt hàng thành công",
+
+      orderId
+
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json(err);
+
+  }
 
 };
 
+// ============================
 // ĐƠN HÀNG THEO USER
-exports.getOrdersByUser = (req, res) => {
+// ============================
+exports.getOrdersByUser = async (req, res) => {
 
-  const userId = req.params.userId;
+  try {
 
-  db.query(
+    const userId = req.params.userId;
 
-    `
-    SELECT *
-    FROM orders
-    WHERE user_id = ?
-    ORDER BY created_at DESC
-    `,
+    const result = await db.query(
+      `
+      SELECT *
+      FROM orders
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+      `,
+      [userId]
+    );
 
-    [userId],
+    res.json(result.rows);
 
-    (err, results) => {
+  } catch (err) {
 
-      if (err) {
-        return res.status(500).json(err);
-      }
+    console.log(err);
 
-      res.json(results);
+    res.status(500).json(err);
 
-    }
-  );
+  }
 
 };
 
+// ============================
 // CHI TIẾT ĐƠN HÀNG
-exports.getOrderDetail = (req, res) => {
+// ============================
+exports.getOrderDetail = async (req, res) => {
 
-  const orderId = req.params.id;
+  try {
 
-  db.query(
+    const orderId = req.params.id;
 
-    `
-    SELECT
-      oi.*,
-      p.name,
-      p.image
-    FROM order_items oi
-    JOIN products p
-      ON oi.product_id = p.id
-    WHERE oi.order_id = ?
-    `,
+    const result = await db.query(
+      `
+      SELECT
+        oi.*,
+        p.name,
+        p.image
+      FROM order_items oi
+      JOIN products p
+        ON oi.product_id = p.id
+      WHERE oi.order_id = $1
+      `,
+      [orderId]
+    );
 
-    [orderId],
+    res.json(result.rows);
 
-    (err, results) => {
+  } catch (err) {
 
-      if (err) {
+    console.log(err);
 
-        return res.status(500).json(err);
+    res.status(500).json(err);
 
-      }
-
-      res.json(results);
-
-    }
-  );
+  }
 
 };
 
+// ============================
 // ADMIN - TẤT CẢ ĐƠN HÀNG
-exports.getAllOrders = (req, res) => {
+// ============================
+exports.getAllOrders = async (req, res) => {
 
-  db.query(
+  try {
 
-    `
-    SELECT
-      o.*,
-      u.username
-    FROM orders o
-    JOIN users u
-      ON o.user_id = u.id
-    ORDER BY o.created_at DESC
-    `,
+    const result = await db.query(
+      `
+      SELECT
+        o.*,
+        u.username
+      FROM orders o
+      JOIN users u
+        ON o.user_id = u.id
+      ORDER BY o.created_at DESC
+      `
+    );
 
-    (err, results) => {
+    res.json(result.rows);
 
-      if (err) {
+  } catch (err) {
 
-        return res.status(500).json(err);
+    console.log(err);
 
-      }
+    res.status(500).json(err);
 
-      res.json(results);
-
-    }
-  );
+  }
 
 };
 
+// ============================
 // UPDATE STATUS
-exports.updateStatus = (req, res) => {
+// ============================
+exports.updateStatus = async (req, res) => {
 
-  const { status } = req.body;
+  try {
 
-  const id = req.params.id;
+    const { status } = req.body;
 
-  db.query(
+    const id = req.params.id;
 
-    `
-    UPDATE orders
-    SET status = ?
-    WHERE id = ?
-    `,
+    await db.query(
+      `
+      UPDATE orders
+      SET status = $1
+      WHERE id = $2
+      `,
+      [status, id]
+    );
 
-    [status, id],
+    res.json({
+      message: "Cập nhật thành công"
+    });
 
-    (err) => {
+  } catch (err) {
 
-      if (err) {
+    console.log(err);
 
-        return res.status(500).json(err);
+    res.status(500).json(err);
 
-      }
-
-      res.json({
-        message: "Cập nhật thành công"
-      });
-
-    }
-  );
+  }
 
 };
 
+// ============================
 // DOANH THU THEO THÁNG
-exports.getRevenueByMonth = (req, res) => {
+// ============================
+exports.getRevenueByMonth = async (req, res) => {
 
-  const year = req.params.year;
+  try {
 
-  const sql = `
-    SELECT
-      MONTH(created_at) as month,
-      SUM(total) as revenue
-    FROM orders
-    WHERE status = 'paid'
-      AND YEAR(created_at) = ?
-    GROUP BY MONTH(created_at)
-    ORDER BY month
-  `;
+    const year = req.params.year;
 
-  db.query(sql, [year], (err, results) => {
+    const result = await db.query(
+      `
+      SELECT
+        EXTRACT(MONTH FROM created_at) as month,
+        SUM(total) as revenue
+      FROM orders
+      WHERE status = 'paid'
+        AND EXTRACT(YEAR FROM created_at) = $1
+      GROUP BY month
+      ORDER BY month
+      `,
+      [year]
+    );
 
-    if (err) {
+    res.json(result.rows);
 
-      return res.status(500).json(err);
+  } catch (err) {
 
-    }
+    console.log(err);
 
-    res.json(results);
+    res.status(500).json(err);
 
-  });
+  }
 
 };
 
+// ============================
 // DOANH THU THEO NĂM
-exports.getRevenueByYear = (req, res) => {
+// ============================
+exports.getRevenueByYear = async (req, res) => {
 
-  const sql = `
-    SELECT
-      YEAR(created_at) as year,
-      SUM(total) as revenue
-    FROM orders
-    WHERE status = 'paid'
-    GROUP BY YEAR(created_at)
-    ORDER BY year
-  `;
+  try {
 
-  db.query(sql, (err, results) => {
+    const result = await db.query(
+      `
+      SELECT
+        EXTRACT(YEAR FROM created_at) as year,
+        SUM(total) as revenue
+      FROM orders
+      WHERE status = 'paid'
+      GROUP BY year
+      ORDER BY year
+      `
+    );
 
-    if (err) {
+    res.json(result.rows);
 
-      return res.status(500).json(err);
+  } catch (err) {
 
-    }
+    console.log(err);
 
-    res.json(results);
+    res.status(500).json(err);
 
-  });
+  }
 
 };
 
+// ============================
 // DOANH THU THEO CATEGORY
-exports.getRevenueByCategory = (req, res) => {
+// ============================
+exports.getRevenueByCategory = async (req, res) => {
 
-  const sql = `
-    SELECT
-      c.name as category,
-      SUM(oi.price * oi.quantity) as revenue
-    FROM order_items oi
+  try {
 
-    JOIN products p
-      ON oi.product_id = p.id
+    const result = await db.query(
+      `
+      SELECT
+        c.name as category,
+        SUM(oi.price * oi.quantity) as revenue
+      FROM order_items oi
 
-    JOIN categories c
-      ON p.category_id = c.id
+      JOIN products p
+        ON oi.product_id = p.id
 
-    JOIN orders o
-      ON oi.order_id = o.id
+      JOIN categories c
+        ON p.category_id = c.id
 
-    WHERE o.status = 'paid'
+      JOIN orders o
+        ON oi.order_id = o.id
 
-    GROUP BY c.id
-  `;
-  db.query(sql, (err, results) => {
-    if (err) {
-      return res.status(500).json(err);
-    }
-    res.json(results);
-  });
+      WHERE o.status = 'paid'
+
+      GROUP BY c.id, c.name
+      `
+    );
+
+    res.json(result.rows);
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json(err);
+
+  }
+
 };
-//Xóa đơn hàng
-exports.deleteOrder = (req, res) => {
-  const id = req.params.id;
 
-  db.query(
-    "DELETE FROM orders WHERE id = ?",
-    [id],
-    (err) => {
-      if (err) {
-        return res.status(500).json(err);
-      }
+// ============================
+// XÓA ĐƠN HÀNG
+// ============================
+exports.deleteOrder = async (req, res) => {
 
-      res.json({ message: "Đã xóa đơn hàng" });
-    }
-  );
+  try {
+
+    const id = req.params.id;
+
+    // xóa order_items trước
+    await db.query(
+      `
+      DELETE FROM order_items
+      WHERE order_id = $1
+      `,
+      [id]
+    );
+
+    // xóa order
+    await db.query(
+      `
+      DELETE FROM orders
+      WHERE id = $1
+      `,
+      [id]
+    );
+
+    res.json({
+      message: "Đã xóa đơn hàng"
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json(err);
+
+  }
+
 };

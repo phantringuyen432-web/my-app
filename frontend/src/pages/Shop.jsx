@@ -22,26 +22,36 @@ const Shop = ({ addToCart }) => {
   }, []);
 
   // fetch products
-  useEffect(() => {
+useEffect(() => {
 
-    let url = "https://my-app-ne36.onrender.com/api/product";
+  let url = "https://my-app-ne36.onrender.com/api/product";
 
-    if (selectedCategory) {
-      url += `?category=${selectedCategory}`;
-    }
+  if (selectedCategory) {
+    url += `?category=${selectedCategory}`;
+  }
 
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
 
+      console.log(data);
+
+      // đảm bảo luôn là array
+      if (Array.isArray(data)) {
         setProducts(data);
+      } else {
+        setProducts([]);
+      }
 
-        // reset page khi đổi category
-        setCurrentPage(1);
+      setCurrentPage(1);
 
-      });
+    })
+    .catch(err => {
+      console.log(err);
+      setProducts([]);
+    });
 
-  }, [selectedCategory]);
+}, [selectedCategory]);
 
   const user = JSON.parse(localStorage.getItem("user"));
 

@@ -1,38 +1,63 @@
-const db = require('../config/db');
+const db = require("../config/db");
 
-exports.getProducts = (req, res) => {
-  const { category } = req.query;
+// ============================
+// GET PRODUCTS
+// ============================
+exports.getProducts = async (req, res) => {
 
-  let sql = `
-    SELECT p.*, c.name AS category_name
-    FROM products p
-    LEFT JOIN categories c ON p.category_id = c.id
-  `;
+  try {
 
-  let params = [];
+    const { category } = req.query;
 
-  // nếu có filter category
-  if (category) {
-    sql += " WHERE p.category_id = ?";
-    params.push(category);
+    let sql = `
+      SELECT 
+        p.*,
+        c.name AS category_name
+      FROM products p
+      LEFT JOIN categories c
+      ON p.category_id = c.id
+    `;
+
+    let params = [];
+
+    // filter category
+    if (category) {
+
+      sql += ` WHERE p.category_id = $1`;
+
+      params.push(category);
+
+    }
+
+    const result = await db.query(sql, params);
+
+    res.json(result.rows);
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: "Server error"
+    });
+
   }
 
-  db.query(sql, params, (err, results) => {
-    if (err) return res.status(500).json(err);
-
-    console.log("DATA:", results);
-    res.json(results);
-  });
 };
-// them SP
-exports.addProduct = (req, res) => {
+
+// ============================
+// ADD PRODUCT
+// ============================
+exports.addProduct = async (req, res) => {
 
   try {
 
     if (!req.file) {
+
       return res.status(400).json({
         message: "Chưa upload ảnh"
       });
+
     }
 
     const {
@@ -46,11 +71,12 @@ exports.addProduct = (req, res) => {
     const image = req.file.path;
 
     // insert product
-    db.query(
+    const productResult = await db.query(
       `
       INSERT INTO products
       (name, price, image, category_id, description)
-      VALUES (?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id
       `,
       [
         name,
@@ -58,58 +84,36 @@ exports.addProduct = (req, res) => {
         image,
         category_id,
         description
-      ],
-      (err, result) => {
+      ]
+    );
 
-        if (err) {
-          console.log(err);
-          return res.status(500).json(err);
-        }
+    const productId = productResult.rows[0].id;
 
-        const productId = result.insertId;
+    // parse variants
+    const parsedVariants = JSON.parse(variants);
 
-        // parse variants JSON
-        const parsedVariants = JSON.parse(variants);
+    // insert variants
+    for (const v of parsedVariants) {
 
-        // nếu không có variants
-        if (!parsedVariants.length) {
-          return res.json({
-            message: "Thêm sản phẩm thành công"
-          });
-        }
-
-        // tạo values insert
-        const values = parsedVariants.map(v => [
+      await db.query(
+        `
+        INSERT INTO product_variants
+        (product_id, size, color, stock)
+        VALUES ($1, $2, $3, $4)
+        `,
+        [
           productId,
           v.size,
           v.color,
           v.stock
-        ]);
+        ]
+      );
 
-        // insert variants
-        db.query(
-          `
-          INSERT INTO product_variants
-          (product_id, size, color, stock)
-          VALUES ?
-          `,
-          [values],
-          (err2) => {
+    }
 
-            if (err2) {
-              console.log(err2);
-              return res.status(500).json(err2);
-            }
-
-            res.json({
-              message: "Thêm sản phẩm thành công"
-            });
-
-          }
-        );
-
-      }
-    );
+    res.json({
+      message: "Thêm sản phẩm thành công"
+    });
 
   } catch (err) {
 
@@ -120,214 +124,242 @@ exports.addProduct = (req, res) => {
     });
 
   }
+
 };
+
+// ============================
 // DELETE PRODUCT
-exports.deleteProduct = (req, res) => {
+// ============================
+exports.deleteProduct = async (req, res) => {
 
-  const id = req.params.id;
+  try {
 
-  // xóa variants trước
-  db.query(
-    "DELETE FROM product_variants WHERE product_id = ?",
-    [id],
-    (err) => {
+    const id = req.params.id;
 
-      if (err) {
-        return res.status(500).json(err);
-      }
+    // delete variants
+    await db.query(
+      `
+      DELETE FROM product_variants
+      WHERE product_id = $1
+      `,
+      [id]
+    );
 
-      // xóa product
-      db.query(
-        "DELETE FROM products WHERE id = ?",
-        [id],
-        (err2) => {
+    // delete product
+    await db.query(
+      `
+      DELETE FROM products
+      WHERE id = $1
+      `,
+      [id]
+    );
 
-          if (err2) {
-            return res.status(500).json(err2);
-          }
+    res.json({
+      message: "Đã xóa sản phẩm"
+    });
 
-          res.json({
-            message: "Đã xóa sản phẩm"
-          });
+  } catch (err) {
 
-        }
+    console.log(err);
+
+    res.status(500).json(err);
+
+  }
+
+};
+
+// ============================
+// GET PRODUCT BY ID
+// ============================
+exports.getProductById = async (req, res) => {
+
+  try {
+
+    const id = req.params.id;
+
+    const result = await db.query(
+      `
+      SELECT *
+      FROM products
+      WHERE id = $1
+      `,
+      [id]
+    );
+
+    res.json(result.rows[0]);
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json(err);
+
+  }
+
+};
+
+// ============================
+// UPDATE PRODUCT
+// ============================
+exports.updateProduct = async (req, res) => {
+
+  try {
+
+    const id = req.params.id;
+
+    const {
+      name,
+      price,
+      category_id,
+      description,
+      variants
+    } = req.body;
+
+    let image = null;
+
+    if (req.file) {
+      image = req.file.path;
+    }
+
+    // update product
+    if (image) {
+
+      await db.query(
+        `
+        UPDATE products
+        SET
+          name = $1,
+          price = $2,
+          category_id = $3,
+          description = $4,
+          image = $5
+        WHERE id = $6
+        `,
+        [
+          name,
+          price,
+          category_id,
+          description,
+          image,
+          id
+        ]
+      );
+
+    } else {
+
+      await db.query(
+        `
+        UPDATE products
+        SET
+          name = $1,
+          price = $2,
+          category_id = $3,
+          description = $4
+        WHERE id = $5
+        `,
+        [
+          name,
+          price,
+          category_id,
+          description,
+          id
+        ]
       );
 
     }
-  );
 
-};
-//lấy Sp theo ID
-exports.getProductById = (req, res) => {
-  const id = req.params.id;
+    // delete old variants
+    await db.query(
+      `
+      DELETE FROM product_variants
+      WHERE product_id = $1
+      `,
+      [id]
+    );
 
-  db.query("SELECT * FROM products WHERE id = ?", [id], (err, result) => {
-    if (err) return res.status(500).json(err);
-    res.json(result[0]);
-  });
-};
-// UPDATE PRODUCT
-exports.updateProduct = (req, res) => {
+    // insert new variants
+    const parsedVariants = JSON.parse(variants);
 
-  const id = req.params.id;
+    for (const v of parsedVariants) {
 
-  const {
-    name,
-    price,
-    category_id,
-    description,
-    variants
-  } = req.body;
-
-  let image = null;
-
-  if (req.file) {
-    image = req.file.path;
-  }
-
-  // query update product
-  let sql = "";
-  let params = [];
-
-  // có ảnh mới
-  if (image) {
-
-    sql = `
-      UPDATE products
-      SET
-        name = ?,
-        price = ?,
-        category_id = ?,
-        description = ?,
-        image = ?
-      WHERE id = ?
-    `;
-
-    params = [
-      name,
-      price,
-      category_id,
-      description,
-      image,
-      id
-    ];
-
-  } else {
-
-    // không đổi ảnh
-    sql = `
-      UPDATE products
-      SET
-        name = ?,
-        price = ?,
-        category_id = ?,
-        description = ?
-      WHERE id = ?
-    `;
-
-    params = [
-      name,
-      price,
-      category_id,
-      description,
-      id
-    ];
-  }
-
-  db.query(sql, params, (err) => {
-
-    if (err) {
-      return res.status(500).json(err);
-    }
-
-    // xóa variants cũ
-    db.query(
-      "DELETE FROM product_variants WHERE product_id = ?",
-      [id],
-      (err2) => {
-
-        if (err2) {
-          return res.status(500).json(err2);
-        }
-
-        // parse variants mới
-        const parsedVariants = JSON.parse(variants);
-
-        // nếu không có variants
-        if (!parsedVariants.length) {
-          return res.json({
-            message: "Cập nhật thành công"
-          });
-        }
-
-        // tạo values
-        const values = parsedVariants.map(v => [
+      await db.query(
+        `
+        INSERT INTO product_variants
+        (product_id, size, color, stock)
+        VALUES ($1, $2, $3, $4)
+        `,
+        [
           id,
           v.size,
           v.color,
           v.stock
-        ]);
+        ]
+      );
 
-        // insert variants mới
-        db.query(
-          `
-          INSERT INTO product_variants
-          (product_id, size, color, stock)
-          VALUES ?
-          `,
-          [values],
-          (err3) => {
+    }
 
-            if (err3) {
-              return res.status(500).json(err3);
-            }
+    res.json({
+      message: "Cập nhật thành công"
+    });
 
-            res.json({
-              message: "Cập nhật thành công"
-            });
+  } catch (err) {
 
-          }
-        );
+    console.log(err);
 
-      }
-    );
+    res.status(500).json(err);
 
-  });
+  }
 
 };
-// Lấy chi tiết sản phẩm
-exports.getProductDetail = (req, res) => {
 
-  const productId = req.params.id;
+// ============================
+// GET PRODUCT DETAIL
+// ============================
+exports.getProductDetail = async (req, res) => {
 
-  // lấy product
-  db.query(
-    "SELECT * FROM products WHERE id = ?",
-    [productId],
-    (err, productResult) => {
+  try {
 
-      if (err) return res.status(500).json(err);
+    const productId = req.params.id;
 
-      if (productResult.length === 0) {
-        return res.status(404).json({
-          message: "Không tìm thấy sản phẩm"
-        });
-      }
+    // get product
+    const productResult = await db.query(
+      `
+      SELECT *
+      FROM products
+      WHERE id = $1
+      `,
+      [productId]
+    );
 
-      // lấy variants
-      db.query(
-        "SELECT * FROM product_variants WHERE product_id = ?",
-        [productId],
-        (err, variantResult) => {
+    if (productResult.rows.length === 0) {
 
-          if (err) return res.status(500).json(err);
+      return res.status(404).json({
+        message: "Không tìm thấy sản phẩm"
+      });
 
-          res.json({
-            product: productResult[0],
-            variants: variantResult
-          });
-        }
-      );
     }
-  );
+
+    // get variants
+    const variantResult = await db.query(
+      `
+      SELECT *
+      FROM product_variants
+      WHERE product_id = $1
+      `,
+      [productId]
+    );
+
+    res.json({
+      product: productResult.rows[0],
+      variants: variantResult.rows
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json(err);
+
+  }
+
 };

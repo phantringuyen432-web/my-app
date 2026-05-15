@@ -1,116 +1,248 @@
-const db = require('../config/db');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const transporter = require('../config/mail'); // thêm
+const db = require("../config/db");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const transporter = require("../config/mail");
 
-// REGISTER + gửi OTP
+// ============================
+// REGISTER + GỬI OTP
+// ============================
 exports.register = async (req, res) => {
-  const { username, email, password } = req.body;
 
-  const hashed = await bcrypt.hash(password, 10);
+  try {
 
-  //tạo OTP
-  const otp = Math.floor(100000 + Math.random() * 900000);
-  const expire = new Date(Date.now() + 5 * 60 * 1000); // 5 phút
+    const {
+      username,
+      email,
+      password
+    } = req.body;
 
-  db.query(
-    "INSERT INTO users (username, email, password, otp_code, otp_expire, is_verified) VALUES (?, ?, ?, ?, ?, 0)",
-    [username, email, hashed, otp, expire],
-    async (err) => {
-      if (err) return res.status(500).json(err);
+    const hashed = await bcrypt.hash(password, 10);
 
-      try {
-        // gửi mail
-        await transporter.sendMail({
-          to: email,
-          subject: "Mã OTP xác thực",
-          text: `Mã OTP của bạn là: ${otp}`
-        });
+    // tạo OTP
+    const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
 
-        res.json({ message: "Đăng ký thành công! Vui lòng kiểm tra email để lấy OTP." });
+    const expire = new Date(
+      Date.now() + 5 * 60 * 1000
+    );
 
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Lỗi gửi email" });
-      }
-    }
-  );
+    // insert user
+    await db.query(
+      `
+      INSERT INTO users
+      (
+        username,
+        email,
+        password,
+        otp_code,
+        otp_expire,
+        is_verified
+      )
+      VALUES ($1, $2, $3, $4, $5, false)
+      `,
+      [
+        username,
+        email,
+        hashed,
+        otp,
+        expire
+      ]
+    );
+
+    // gửi email
+    await transporter.sendMail({
+
+      to: email,
+
+      subject: "Mã OTP xác thực",
+
+      text: `Mã OTP của bạn là: ${otp}`
+
+    });
+
+    res.json({
+
+      message:
+        "Đăng ký thành công! Vui lòng kiểm tra email để lấy OTP."
+
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: "Lỗi server"
+    });
+
+  }
+
 };
 
+// ============================
 // VERIFY OTP
-exports.verifyOTP = (req, res) => {
-  const { email, otp } = req.body;
+// ============================
+exports.verifyOTP = async (req, res) => {
 
-  db.query(
-    "SELECT * FROM users WHERE email = ?",
-    [email],
-    (err, results) => {
-      if (err) return res.status(500).json(err);
-      if (results.length === 0)
-        return res.status(400).json({ message: "Email không tồn tại" });
+  try {
 
-      const user = results[0];
+    const {
+      email,
+      otp
+    } = req.body;
 
-      if (user.otp_code !== otp)
-        return res.status(400).json({ message: "OTP sai" });
+    const result = await db.query(
+      `
+      SELECT *
+      FROM users
+      WHERE email = $1
+      `,
+      [email]
+    );
 
-      if (new Date() > user.otp_expire)
-        return res.status(400).json({ message: "OTP đã hết hạn" });
+    if (result.rows.length === 0) {
 
-      //cập nhật xác thực
-      db.query(
-        "UPDATE users SET is_verified = 1 WHERE email = ?",
-        [email],
-        (err) => {
-          if (err) return res.status(500).json(err);
+      return res.status(400).json({
+        message: "Email không tồn tại"
+      });
 
-          res.json({ message: "Xác thực thành công!" });
-        }
-      );
     }
-  );
+
+    const user = result.rows[0];
+
+    // kiểm tra OTP
+    if (user.otp_code !== otp) {
+
+      return res.status(400).json({
+        message: "OTP sai"
+      });
+
+    }
+
+    // kiểm tra hết hạn
+    if (new Date() > new Date(user.otp_expire)) {
+
+      return res.status(400).json({
+        message: "OTP đã hết hạn"
+      });
+
+    }
+
+    // update verified
+    await db.query(
+      `
+      UPDATE users
+      SET is_verified = true
+      WHERE email = $1
+      `,
+      [email]
+    );
+
+    res.json({
+      message: "Xác thực thành công!"
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json(err);
+
+  }
+
 };
 
+// ============================
 // LOGIN
-exports.login = (req, res) => {
-  const { email, password } = req.body;
+// ============================
+exports.login = async (req, res) => {
 
-  db.query(
-    "SELECT * FROM users WHERE email = ?",
-    [email],
-    async (err, results) => {
-      if (err) return res.status(500).json(err);
-      if (results.length === 0)
-        return res.status(400).json({ message: "Sai email" });
+  try {
 
-      const user = results[0];
+    const {
+      email,
+      password
+    } = req.body;
 
-      // chưa xác thực thì không cho login
-      if (!user.is_verified) {
-        return res.status(400).json({
-          message: "Vui lòng xác thực email trước"
-        });
+    const result = await db.query(
+      `
+      SELECT *
+      FROM users
+      WHERE email = $1
+      `,
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+
+      return res.status(400).json({
+        message: "Sai email"
+      });
+
+    }
+
+    const user = result.rows[0];
+
+    // chưa verify
+    if (!user.is_verified) {
+
+      return res.status(400).json({
+        message: "Vui lòng xác thực email trước"
+      });
+
+    }
+
+    // check password
+    const match = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!match) {
+
+      return res.status(400).json({
+        message: "Sai mật khẩu"
+      });
+
+    }
+
+    // token
+    const token = jwt.sign(
+      {
+        id: user.id,
+        role: user.role
+      },
+      "SECRET_KEY",
+      {
+        expiresIn: "1d"
+      }
+    );
+
+    res.json({
+
+      message: "Đăng nhập thành công",
+
+      token,
+
+      user: {
+
+        id: user.id,
+
+        username: user.username,
+
+        role: user.role
+
       }
 
-      const match = await bcrypt.compare(password, user.password);
-      if (!match)
-        return res.status(400).json({ message: "Sai mật khẩu" });
+    });
 
-      const token = jwt.sign(
-        { id: user.id, role: user.role },
-        "SECRET_KEY",
-        { expiresIn: "1d" }
-      );
+  } catch (err) {
 
-      res.json({
-        message: "Đăng nhập thành công",
-        token,
-        user: {
-          id: user.id,
-          username: user.username,
-          role: user.role
-        }
-      });
-    }
-  );
+    console.log(err);
+
+    res.status(500).json(err);
+
+  }
+
 };
