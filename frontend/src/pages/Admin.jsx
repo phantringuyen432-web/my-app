@@ -15,7 +15,7 @@ const Admin = () => {
 
   // load danh sách đơn
   const fetchOrders = () => {
-    fetch("https://my-app-production-f477.up.railway.app/api/order/admin/all")
+    fetch("https://my-app-ne36.onrender.com/api/order/admin/all")
       .then(res => res.json())
       .then(data => setOrders(data));
   };
@@ -26,7 +26,7 @@ const Admin = () => {
 
   // update trạng thái
   const updateStatus = (id, status) => {
-    fetch(`https://my-app-production-f477.up.railway.app/api/order/${id}`, {
+    fetch(`https://my-app-ne36.onrender.com/api/order/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status })
@@ -46,7 +46,7 @@ const Admin = () => {
 
     if (!confirmDelete) return;
 
-    fetch(`https://my-app-production-f477.up.railway.app/api/order/${id}`, {
+    fetch(`https://my-app-ne36.onrender.com/api/order/${id}`, {
       method: "DELETE"
     })
       .then(res => res.json())

@@ -16,7 +16,7 @@ const ProductDetail = ({ addToCart }) => {
   // load product detail
   useEffect(() => {
 
-    fetch(`https://my-app-production-f477.up.railway.app/api/product/${id}`)
+    fetch(`https://my-app-ne36.onrender.com/api/product/${id}`)
       .then(res => res.json())
       .then(data => {
 

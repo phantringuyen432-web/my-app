@@ -6,7 +6,7 @@ const ProductList = () => {
   const navigate = useNavigate();
 
   const fetchProducts = () => {
-    fetch("https://my-app-production-f477.up.railway.app/api/product")
+    fetch("https://my-app-ne36.onrender.com/api/product")
       .then(res => res.json())
       .then(data => setProducts(data));
   };
@@ -18,7 +18,7 @@ const ProductList = () => {
   const handleDelete = (id) => {
     if (!window.confirm("Xóa sản phẩm này?")) return;
 
-    fetch(`https://my-app-production-f477.up.railway.app/api/product/${id}`, {
+    fetch(`https://my-app-ne36.onrender.com/api/product/${id}`, {
       method: "DELETE"
     })
       .then(() => {

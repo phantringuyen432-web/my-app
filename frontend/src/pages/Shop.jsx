@@ -15,7 +15,7 @@ const Shop = ({ addToCart }) => {
   // fetch categories
   useEffect(() => {
 
-    fetch("https://my-app-production-f477.up.railway.app/api/category")
+    fetch("https://my-app-ne36.onrender.com/api/category")
       .then(res => res.json())
       .then(data => setCategories(data));
 
@@ -24,7 +24,7 @@ const Shop = ({ addToCart }) => {
   // fetch products
   useEffect(() => {
 
-    let url = "https://my-app-production-f477.up.railway.app/api/product";
+    let url = "https://my-app-ne36.onrender.com/api/product";
 
     if (selectedCategory) {
       url += `?category=${selectedCategory}`;

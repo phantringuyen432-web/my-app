@@ -23,7 +23,7 @@ const EditProduct = () => {
   // load categories
   useEffect(() => {
 
-    fetch("https://my-app-production-f477.up.railway.app/api/category")
+    fetch("https://my-app-ne36.onrender.com/api/category")
       .then(res => res.json())
       .then(data => setCategories(data));
 
@@ -32,7 +32,7 @@ const EditProduct = () => {
   // load product detail
   useEffect(() => {
 
-    fetch(`https://my-app-production-f477.up.railway.app/api/product/${id}`)
+    fetch(`https://my-app-ne36.onrender.com/api/product/${id}`)
       .then(res => res.json())
       .then(data => {
         const product = data.product;
@@ -111,7 +111,7 @@ const EditProduct = () => {
       formData.append("image", image);
     }
 
-    fetch(`https://my-app-production-f477.up.railway.app/api/product/${id}`, {
+    fetch(`https://my-app-ne36.onrender.com/api/product/${id}`, {
       method: "PUT",
       body: formData
     })

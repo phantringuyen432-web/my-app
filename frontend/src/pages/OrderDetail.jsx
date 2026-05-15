@@ -6,7 +6,7 @@ const OrderDetail = () => {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    fetch(`https://my-app-production-f477.up.railway.app/api/order/${id}`)
+    fetch(`https://my-app-ne36.onrender.com/api/order/${id}`)
       .then(res => res.json())
       .then(data => setItems(data));
   }, [id]);

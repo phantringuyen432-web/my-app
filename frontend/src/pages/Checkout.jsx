@@ -60,7 +60,7 @@ const Checkout = ({ cart, setCart }) => {
 
     }));
 
-    fetch("https://my-app-production-f477.up.railway.app/api/order", {
+    fetch("https://my-app-ne36.onrender.com/api/order", {
 
       method: "POST",
 
