@@ -278,7 +278,10 @@ exports.updateProduct = async (req, res) => {
     );
 
     // insert new variants
-    const parsedVariants = JSON.parse(variants);
+    let parsedVariants = [];
+    if (variants) {
+      parsedVariants = JSON.parse(variants);
+    }
 
     for (const v of parsedVariants) {
 

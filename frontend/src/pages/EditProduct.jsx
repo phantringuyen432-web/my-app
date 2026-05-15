@@ -93,7 +93,9 @@ const EditProduct = () => {
   };
 
   // submit
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+
+  try {
 
     const formData = new FormData();
 
@@ -111,26 +113,38 @@ const EditProduct = () => {
       formData.append("image", image);
     }
 
-    fetch(`https://my-app-ne36.onrender.com/api/product/${id}`, {
-      method: "PUT",
-      body: formData
-    })
-      .then(res => res.json())
-      .then(() => {
+    const res = await fetch(
+      `https://my-app-ne36.onrender.com/api/product/${id}`,
+      {
+        method: "PUT",
+        body: formData
+      }
+    );
 
-        alert("Cập nhật thành công");
+    const data = await res.json();
 
-        navigate("/admin/product-list");
+    console.log(data);
 
-      })
-      .catch(err => {
+    if (!res.ok) {
 
-        console.log(err);
+      alert(data.message || "Cập nhật thất bại");
 
-        alert("Có lỗi xảy ra");
+      return;
+    }
 
-      });
-  };
+    alert("Cập nhật thành công");
+
+    navigate("/admin/product-list");
+
+  } catch (err) {
+
+    console.log(err);
+
+    alert("Có lỗi xảy ra");
+
+  }
+
+};
 
   return (
     <div className="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow">
