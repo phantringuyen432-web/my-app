@@ -30,18 +30,30 @@ const Login = () => {
       .then(data => {
         if (data.token) {
           // lưu token
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify(data.user));
-          //Xác định role người dùng 
+          localStorage.setItem(
+            "token",
+            data.token
+          );
+          localStorage.setItem(
+            "user",
+            JSON.stringify(data.user)
+          );
+          toast.success("Đăng nhập thành công");
+          // admin
           if (data.user.role === "admin") {
             navigate("/admin");
           } else {
             navigate("/");
           }
-          // alert("Đăng nhập thành công!");
         } else {
-          toast.success("Đăng nhập thành công");
+          toast.error(
+            data.message || "Đăng nhập thất bại"
+          );
         }
+      })
+      .catch(err => {
+        console.log(err);
+        toast.error("Lỗi server");
       });
   };
 
