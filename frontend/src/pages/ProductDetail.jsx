@@ -50,9 +50,25 @@ const ProductDetail = ({ addToCart }) => {
   }, [selectedColor, selectedSize, variants]);
 
   // loading
-  if (!product) {
-    return <p className="p-10">Loading...</p>;
-  }
+if (!product) {
+  return (
+    <div className="min-h-screen bg-gray-100 py-10 px-4">
+      <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-lg p-8 grid md:grid-cols-2 gap-10 animate-pulse">
+        {/* IMAGE */}
+        <div className="w-full h-[500px] bg-gray-300 rounded-2xl"></div>
+        {/* INFO */}
+        <div>
+          <div className="h-10 bg-gray-300 rounded mb-6"></div>
+          <div className="h-8 w-1/2 bg-gray-300 rounded mb-8"></div>
+          <div className="h-28 bg-gray-300 rounded mb-8"></div>
+          <div className="h-14 bg-gray-300 rounded-xl mb-6"></div>
+          <div className="h-14 bg-gray-300 rounded-xl mb-6"></div>
+          <div className="h-16 bg-gray-300 rounded-2xl"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
   // unique colors
   const colors = [
