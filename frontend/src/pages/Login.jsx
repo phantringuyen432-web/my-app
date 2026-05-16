@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const Login = () => {
   const [form, setForm] = useState({
@@ -39,7 +40,7 @@ const Login = () => {
           }
           // alert("Đăng nhập thành công!");
         } else {
-          alert(data.message);
+          toast.success("Đăng nhập thành công");
         }
       });
   };
