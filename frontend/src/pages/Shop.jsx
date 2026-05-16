@@ -196,9 +196,7 @@ const Shop = () => {
           >
             Tất cả
           </button>
-
           {categories.map(cat => (
-
             <button
               key={cat.id}
               onClick={() =>
@@ -213,14 +211,12 @@ const Shop = () => {
             >
               {cat.name}
             </button>
-
           ))}
 
         </div>
 
         {/* SEARCH */}
         <div className="mb-6">
-
           <input
             type="text"
             placeholder="Tìm sản phẩm..."
@@ -230,20 +226,28 @@ const Shop = () => {
             }
             className="w-full border p-3 rounded-xl"
           />
-
         </div>
 
         {/* LOADING */}
-        {loading ? (
-
-          <div className="flex justify-center items-center py-20">
-
-            <div className="w-14 h-14 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-
-          </div>
-
-        ) : (
-
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse"
+                >
+                  {/* IMAGE */}
+                  <div className="h-56 bg-gray-300"></div>
+                  {/* INFO */}
+                  <div className="p-4">
+                    <div className="h-6 bg-gray-300 rounded mb-4"></div>
+                    <div className="h-6 w-1/2 bg-gray-300 rounded mb-6"></div>
+                    <div className="h-12 bg-gray-300 rounded-xl"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
           <>
             {/* PRODUCTS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
