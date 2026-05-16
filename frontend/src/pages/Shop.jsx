@@ -1,46 +1,78 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
 
-const Shop = ({ addToCart }) => {
+const Shop = () => {
+
   const [search, setSearch] = useState("");
+
   const [categories, setCategories] = useState([]);
+
   const [selectedCategory, setSelectedCategory] = useState(null);
+
   const [products, setProducts] = useState([]);
+
+  const [loading, setLoading] = useState(true);
 
   // pagination
   const [currentPage, setCurrentPage] = useState(1);
+
   const productsPerPage = 6;
 
   // fetch categories
   useEffect(() => {
+
     fetch("https://my-app-ne36.onrender.com/api/category")
       .then(res => res.json())
       .then(data => setCategories(data));
+
   }, []);
 
   // fetch products
   useEffect(() => {
+
     let url =
       "https://my-app-ne36.onrender.com/api/product";
+
     if (selectedCategory) {
       url += `?category=${selectedCategory}`;
     }
+
+    setLoading(true);
+
     fetch(url)
+
       .then(res => res.json())
+
       .then(data => {
+
         console.log(data);
+
         if (Array.isArray(data)) {
+
           setProducts(data);
+
         } else {
+
           setProducts([]);
+
         }
+
         setCurrentPage(1);
+
+        setLoading(false);
+
       })
+
       .catch(err => {
+
         console.log(err);
+
         setProducts([]);
+
+        setLoading(false);
+
       });
+
   }, [selectedCategory]);
 
   const user = JSON.parse(
@@ -48,9 +80,13 @@ const Shop = ({ addToCart }) => {
   );
 
   const handleLogout = () => {
+
     localStorage.removeItem("user");
+
     localStorage.removeItem("token");
+
     window.location.reload();
+
   };
 
   // SEARCH FILTER
@@ -197,93 +233,108 @@ const Shop = ({ addToCart }) => {
 
         </div>
 
-        {/* PRODUCTS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {/* LOADING */}
+        {loading ? (
 
-          {currentProducts.map(p => (
+          <div className="flex justify-center items-center py-20">
 
-            <div
-              key={p.id}
-              className="bg-white rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition duration-300 overflow-hidden flex flex-col"
-            >
+            <div className="w-14 h-14 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
 
-              {/* IMAGE */}
-              <img
-                src={p.image}
-                alt={p.name}
-                className="h-56 w-full object-cover"
-              />
+          </div>
 
-              {/* INFO */}
-              <div className="p-4 flex flex-col flex-grow">
+        ) : (
 
-                <h2 className="font-semibold text-lg line-clamp-2 min-h-[56px]">
-                  {p.name}
-                </h2>
+          <>
+            {/* PRODUCTS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
-                <p className="text-red-500 font-bold text-xl mt-3">
-                  {Number(p.price).toLocaleString()} VND
-                </p>
+              {currentProducts.map(p => (
 
-                {/* BUTTON */}
-                <Link
-                  to={`/product/${p.id}`}
-                  className="mt-auto block text-center bg-blue-500 hover:bg-blue-700 text-white py-3 rounded-xl transition duration-200 font-semibold"
+                <div
+                  key={p.id}
+                  className="bg-white rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition duration-300 overflow-hidden flex flex-col"
                 >
-                  Xem chi tiết
-                </Link>
 
-              </div>
+                  {/* IMAGE */}
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    className="h-56 w-full object-cover"
+                  />
+
+                  {/* INFO */}
+                  <div className="p-4 flex flex-col flex-grow">
+
+                    <h2 className="font-semibold text-lg line-clamp-2 min-h-[56px]">
+                      {p.name}
+                    </h2>
+
+                    <p className="text-red-500 font-bold text-xl mt-3">
+                      {Number(p.price).toLocaleString()} VND
+                    </p>
+
+                    {/* BUTTON */}
+                    <Link
+                      to={`/product/${p.id}`}
+                      className="mt-auto block text-center bg-blue-500 hover:bg-blue-700 text-white py-3 rounded-xl transition duration-200 font-semibold"
+                    >
+                      Xem chi tiết
+                    </Link>
+
+                  </div>
+
+                </div>
+
+              ))}
 
             </div>
 
-          ))}
+            {/* PAGINATION */}
+            {totalPages > 1 && (
 
-        </div>
+              <div className="flex justify-center items-center gap-4 mt-10">
 
-        {/* PAGINATION */}
-        {totalPages > 1 && (
+                {/* PREV */}
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() =>
+                    setCurrentPage(prev => prev - 1)
+                  }
+                  className={`px-5 py-2 rounded-xl font-semibold transition
+                    ${
+                      currentPage === 1
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-blue-500 hover:bg-blue-600 text-white"
+                    }`}
+                >
+                  ← Trước
+                </button>
 
-          <div className="flex justify-center items-center gap-4 mt-10">
+                {/* PAGE */}
+                <span className="font-semibold text-lg">
+                  Trang {currentPage} / {totalPages}
+                </span>
 
-            {/* PREV */}
-            <button
-              disabled={currentPage === 1}
-              onClick={() =>
-                setCurrentPage(prev => prev - 1)
-              }
-              className={`px-5 py-2 rounded-xl font-semibold transition
-                ${
-                  currentPage === 1
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                }`}
-            >
-              ← Trước
-            </button>
+                {/* NEXT */}
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() =>
+                    setCurrentPage(prev => prev + 1)
+                  }
+                  className={`px-5 py-2 rounded-xl font-semibold transition
+                    ${
+                      currentPage === totalPages
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-blue-500 hover:bg-blue-600 text-white"
+                    }`}
+                >
+                  Tiếp →
+                </button>
 
-            {/* PAGE */}
-            <span className="font-semibold text-lg">
-              Trang {currentPage} / {totalPages}
-            </span>
+              </div>
 
-            {/* NEXT */}
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() =>
-                setCurrentPage(prev => prev + 1)
-              }
-              className={`px-5 py-2 rounded-xl font-semibold transition
-                ${
-                  currentPage === totalPages
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                }`}
-            >
-              Tiếp →
-            </button>
-
-          </div>
+            )}
+          </>
 
         )}
 
@@ -294,7 +345,6 @@ const Shop = ({ addToCart }) => {
 
         <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-8">
 
-          {/* SHOP */}
           <div>
 
             <h2 className="text-2xl font-bold text-white mb-4">
@@ -309,7 +359,6 @@ const Shop = ({ addToCart }) => {
 
           </div>
 
-          {/* LINKS */}
           <div>
 
             <h3 className="text-xl font-semibold text-white mb-4">
@@ -349,7 +398,6 @@ const Shop = ({ addToCart }) => {
 
           </div>
 
-          {/* CONTACT */}
           <div>
 
             <h3 className="text-xl font-semibold text-white mb-4">
@@ -366,7 +414,6 @@ const Shop = ({ addToCart }) => {
 
         </div>
 
-        {/* COPYRIGHT */}
         <div className="border-t border-gray-700 py-4 text-center text-sm">
           © 2026 SHOP. All rights reserved.
         </div>
