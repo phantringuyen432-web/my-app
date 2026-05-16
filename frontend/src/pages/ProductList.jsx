@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
@@ -22,7 +23,7 @@ const ProductList = () => {
       method: "DELETE"
     })
       .then(() => {
-        alert("Đã xóa");
+        toast.success("Đã xóa");
         fetchProducts();
       });
   };

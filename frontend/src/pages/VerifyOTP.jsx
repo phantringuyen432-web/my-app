@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const VerifyOTP = () => {
   const location = useLocation();
@@ -21,9 +22,9 @@ const VerifyOTP = () => {
     })
       .then(res => res.json())
       .then(data => {
-        alert(data.message);
+        toast.warning(data.message);
 
-        // 🔥 nếu thành công → về login
+        // nếu thành công → về login
         if (data.message.includes("thành công")) {
           navigate("/login");
         }

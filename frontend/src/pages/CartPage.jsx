@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Cart from "../components/Cart";
+import { toast } from "react-toastify";
 
 const CartPage = ({ cart, setCart }) => {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ const CartPage = ({ cart, setCart }) => {
 
     //Nếu chưa login → chặn
     if (!user) {
-      alert("⚠️ Bạn cần đăng nhập để xem giỏ hàng!");
+      toast.warning("Bạn cần đăng nhập để xem giỏ hàng!");
       navigate("/login");
     }
   }, [navigate]);

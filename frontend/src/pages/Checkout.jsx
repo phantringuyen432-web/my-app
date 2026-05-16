@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 const Checkout = ({ cart, setCart }) => {
 
@@ -24,7 +25,7 @@ const Checkout = ({ cart, setCart }) => {
 
     if (!user) {
 
-      alert("Vui lòng đăng nhập!");
+      toast.warning("Vui lòng đăng nhập!");
 
       return;
     }
@@ -36,7 +37,7 @@ const Checkout = ({ cart, setCart }) => {
 
     if (invalidItem) {
 
-      alert(
+      toast.warning(
         `${invalidItem.name} chỉ còn ${invalidItem.stock} sản phẩm`
       );
 
@@ -111,7 +112,7 @@ const Checkout = ({ cart, setCart }) => {
 
         console.log(err);
 
-        alert("Có lỗi xảy ra");
+        toast.error("Có lỗi xảy ra");
 
       });
   };

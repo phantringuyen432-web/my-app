@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
 const Shop = ({ addToCart }) => {
 
@@ -68,7 +69,7 @@ const Shop = ({ addToCart }) => {
 
     if (!user) {
 
-      alert("⚠️ Vui lòng đăng nhập!");
+      toast.warning("Vui lòng đăng nhập!");
 
       return;
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const EditProduct = () => {
 
@@ -127,12 +128,12 @@ const EditProduct = () => {
 
     if (!res.ok) {
 
-      alert(data.message || "Cập nhật thất bại");
+      toast.warning(data.message || "Cập nhật thất bại");
 
       return;
     }
 
-    alert("Cập nhật thành công");
+    toast.success("Cập nhật thành công");
 
     navigate("/admin/product-list");
 
@@ -140,7 +141,7 @@ const EditProduct = () => {
 
     console.log(err);
 
-    alert("Có lỗi xảy ra");
+    toast.error("Có lỗi xảy ra");
 
   }
 

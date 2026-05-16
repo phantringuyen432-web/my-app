@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
 const AddProduct = () => {
 
@@ -84,7 +85,7 @@ const AddProduct = () => {
       !form.description ||
       !image
     ) {
-      alert("Vui lòng nhập đầy đủ thông tin!");
+      toast.warning("Vui lòng nhập đầy đủ thông tin!");
       return;
     }
 
@@ -118,7 +119,7 @@ const AddProduct = () => {
 
       console.log(data);
 
-      alert("Thêm sản phẩm thành công!");
+      toast.success("Thêm sản phẩm thành công!");
 
       // reset
       setForm({
@@ -144,7 +145,7 @@ const AddProduct = () => {
     } catch (err) {
 
       console.log(err);
-      alert("Lỗi thêm sản phẩm!");
+      toast.error("Lỗi thêm sản phẩm!");
 
     } finally {
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const Register = () => {
 
@@ -42,7 +43,7 @@ const Register = () => {
       !form.password
     ) {
 
-      alert("Vui lòng nhập đầy đủ thông tin");
+      toast.warning("Vui lòng nhập đầy đủ thông tin");
 
       return;
 
@@ -77,7 +78,7 @@ const Register = () => {
       // lỗi từ server
       if (!res.ok) {
 
-        alert(data.message || "Đăng ký thất bại");
+        toast.warning(data.message || "Đăng ký thất bại");
 
         setLoading(false);
 
@@ -86,7 +87,7 @@ const Register = () => {
       }
 
       // thành công
-      alert(data.message);
+      toast.success(data.message);
 
       navigate("/verify", {
 
@@ -100,7 +101,7 @@ const Register = () => {
 
       console.log(err);
 
-      alert("Không thể kết nối server");
+      toast.error("Không thể kết nối server");
 
     } finally {
 

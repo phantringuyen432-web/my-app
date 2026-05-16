@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
+import { toast } from "react-toastify";
 import Shop from "./pages/Shop";
 import CartPage from "./pages/CartPage";
 import Checkout from "./pages/Checkout";
@@ -49,7 +50,7 @@ function App() {
         newCart[existingIndex].stock
       ) {
 
-        alert(
+        toast.warning(
           `Chỉ còn ${newCart[existingIndex].stock} sản phẩm`
         );
 

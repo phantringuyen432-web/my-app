@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const Admin = () => {
   const [orders, setOrders] = useState([]);
@@ -33,7 +34,7 @@ const Admin = () => {
     })
       .then(res => res.json())
       .then(() => {
-        alert("Đã cập nhật!");
+        toast.success("Đã cập nhật!");
         fetchOrders();
       });
   };
@@ -51,7 +52,7 @@ const Admin = () => {
     })
       .then(res => res.json())
       .then(() => {
-        alert("Đã xóa đơn hàng!");
+        toast.success("Đã xóa đơn hàng!");
         fetchOrders();
       });
   };

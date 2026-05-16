@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const Cart = ({ cart, setCart }) => {
 
@@ -13,7 +14,7 @@ const Cart = ({ cart, setCart }) => {
     // không cho vượt tồn kho
     if (newCart[index].quantity >= newCart[index].stock) {
 
-      alert(
+      toast.warning(
         `Chỉ còn ${newCart[index].stock} sản phẩm trong kho`
       );
 
