@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const ProductDetail = ({ addToCart }) => {
 
@@ -12,6 +13,9 @@ const ProductDetail = ({ addToCart }) => {
   const [selectedSize, setSelectedSize] = useState("");
 
   const [selectedVariant, setSelectedVariant] = useState(null);
+  const user = JSON.parse(
+    localStorage.getItem("user")
+  );
 
   // load product detail
   useEffect(() => {
@@ -201,36 +205,45 @@ const ProductDetail = ({ addToCart }) => {
 
           {/* BUTTON */}
           <button
-
             disabled={
               !selectedVariant ||
               selectedVariant.stock <= 0
             }
-
             onClick={() => {
-
-              addToCart({
-
-                product_id: product.id,
-
-                variant_id: selectedVariant.id,
-
-                name: product.name,
-
-                image: product.image,
-
-                price: product.price,
-
-                size: selectedVariant.size,
-
-                color: selectedVariant.color,
-
-                stock: selectedVariant.stock,
-
-                quantity: 1
-
-              });
-
+                // chưa login
+                if (!user) {
+                  toast.warning(
+                    "Vui lòng đăng nhập!"
+                  );
+                  return;
+                }
+                // chưa chọn biến thể
+                if (!selectedVariant) {
+                  toast.warning(
+                    "Vui lòng chọn size và màu"
+                  );
+                  return;
+                }
+                // hết hàng
+                if (selectedVariant.stock <= 0) {
+                  toast.error("Sản phẩm đã hết hàng");
+                  return;
+                }
+                // add cart
+                addToCart({
+                  product_id: product.id,
+                  variant_id: selectedVariant.id,
+                  name: product.name,
+                  image: product.image,
+                  price: product.price,
+                  size: selectedVariant.size,
+                  color: selectedVariant.color,
+                  stock: selectedVariant.stock,
+                  quantity: 1
+                });
+                toast.success(
+                  "Đã thêm vào giỏ hàng"
+                );
             }}
 
             className={`

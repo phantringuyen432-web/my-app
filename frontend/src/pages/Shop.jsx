@@ -3,90 +3,54 @@ import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 
 const Shop = ({ addToCart }) => {
-
   const [search, setSearch] = useState("");
-
   const [categories, setCategories] = useState([]);
-
   const [selectedCategory, setSelectedCategory] = useState(null);
-
   const [products, setProducts] = useState([]);
 
   // pagination
   const [currentPage, setCurrentPage] = useState(1);
-
   const productsPerPage = 6;
 
   // fetch categories
   useEffect(() => {
-
     fetch("https://my-app-ne36.onrender.com/api/category")
       .then(res => res.json())
       .then(data => setCategories(data));
-
   }, []);
 
   // fetch products
   useEffect(() => {
-
     let url =
       "https://my-app-ne36.onrender.com/api/product";
-
     if (selectedCategory) {
       url += `?category=${selectedCategory}`;
     }
-
     fetch(url)
       .then(res => res.json())
       .then(data => {
-
         console.log(data);
-
         if (Array.isArray(data)) {
           setProducts(data);
         } else {
           setProducts([]);
         }
-
         setCurrentPage(1);
-
       })
       .catch(err => {
-
         console.log(err);
-
         setProducts([]);
-
       });
-
   }, [selectedCategory]);
 
   const user = JSON.parse(
     localStorage.getItem("user")
   );
 
-  const handleAddToCart = (product) => {
-
-    if (!user) {
-
-      toast.warning("Vui lòng đăng nhập!");
-
-      return;
-
-    }
-
-    addToCart(product);
-
-  };
-
   const handleLogout = () => {
-
     localStorage.removeItem("user");
-
     localStorage.removeItem("token");
-
     window.location.reload();
-
   };
 
   // SEARCH FILTER
