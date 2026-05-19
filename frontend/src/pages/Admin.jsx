@@ -7,6 +7,13 @@ const Admin = () => {
 
   const [loading, setLoading] = useState(true);
 
+  // FILTER STATUS
+  const [statusFilter, setStatusFilter] =
+    useState("all");
+
+  // SEARCH ORDER
+  const [search, setSearch] = useState("");
+
   const user = JSON.parse(
     localStorage.getItem("user")
   );
@@ -122,6 +129,25 @@ const Admin = () => {
 
   };
 
+  // FILTER + SEARCH
+  const filteredOrders = orders.filter(order => {
+
+    // filter trạng thái
+    const matchStatus =
+      statusFilter === "all"
+        ? true
+        : order.status === statusFilter;
+
+    // search mã đơn
+    const matchSearch =
+      order.id
+        .toString()
+        .includes(search);
+
+    return matchStatus && matchSearch;
+
+  });
+
   // LOADING
   if (loading) {
 
@@ -146,18 +172,69 @@ const Admin = () => {
         📦 Quản lý đơn hàng
       </h1>
 
+      {/* FILTER + SEARCH */}
+      <div className="bg-white p-5 rounded-2xl shadow mb-6 flex flex-col md:flex-row gap-4">
+
+        {/* SEARCH */}
+        <input
+          type="text"
+          placeholder="🔍 Tìm theo mã đơn..."
+          value={search}
+          onChange={(e) =>
+            setSearch(e.target.value)
+          }
+          className="border px-4 py-3 rounded-xl flex-1"
+        />
+
+        {/* FILTER */}
+        <select
+          value={statusFilter}
+          onChange={(e) =>
+            setStatusFilter(e.target.value)
+          }
+          className="border px-4 py-3 rounded-xl"
+        >
+
+          <option value="all">
+            Tất cả
+          </option>
+
+          <option value="pending">
+            Chờ xác nhận
+          </option>
+
+          <option value="confirmed">
+            Đã xác nhận
+          </option>
+
+          <option value="shipping">
+            Đang giao
+          </option>
+
+          <option value="completed">
+            Hoàn thành
+          </option>
+
+          <option value="cancelled">
+            Đã hủy
+          </option>
+
+        </select>
+
+      </div>
+
       {/* ORDERS */}
       <div className="bg-white rounded-2xl shadow overflow-hidden">
 
-        {orders.length === 0 ? (
+        {filteredOrders.length === 0 ? (
 
           <div className="p-10 text-center text-gray-500">
-            Chưa có đơn hàng
+            Không tìm thấy đơn hàng
           </div>
 
         ) : (
 
-          orders.map(order => (
+          filteredOrders.map(order => (
 
             <div
               key={order.id}
