@@ -1,8 +1,16 @@
 const express = require("express");
+
 const router = express.Router();
 
 const upload = require("../config/upload");
 
+// MIDDLEWARE
+const {
+  verifyToken,
+  isAdmin
+} = require("../middleware/authMiddleware");
+
+// CONTROLLERS
 const {
   getProducts,
   getProductDetail,
@@ -11,25 +19,42 @@ const {
   updateProduct
 } = require("../controllers/productController");
 
+// ============================
+// PUBLIC ROUTES
+// ============================
+
 // GET products
 router.get("/", getProducts);
 
 // GET detail product + variants
 router.get("/:id", getProductDetail);
 
-// POST add product
+// ============================
+// ADMIN ROUTES
+// ============================
+
+// ADD PRODUCT
 router.post(
   "/add",
+  verifyToken,
+  isAdmin,
   upload.single("image"),
   addProduct
 );
 
-// DELETE product
-router.delete("/:id", deleteProduct);
+// DELETE PRODUCT
+router.delete(
+  "/:id",
+  verifyToken,
+  isAdmin,
+  deleteProduct
+);
 
-// UPDATE product
+// UPDATE PRODUCT
 router.put(
   "/:id",
+  verifyToken,
+  isAdmin,
   upload.single("image"),
   updateProduct
 );

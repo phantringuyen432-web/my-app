@@ -18,6 +18,8 @@ const Admin = () => {
     localStorage.getItem("user")
   );
 
+  const token = localStorage.getItem("token");
+
   // check admin
   if (!user || user.role !== "admin") {
 
@@ -35,9 +37,22 @@ const Admin = () => {
     setLoading(true);
 
     fetch(
-      "https://my-app-ne36.onrender.com/api/order/admin/all"
+      "https://my-app-ne36.onrender.com/api/order/admin/all",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
     )
-      .then(res => res.json())
+      .then(res => {
+
+        if (!res.ok) {
+          throw new Error("Unauthorized");
+        }
+
+        return res.json();
+
+      })
       .then(data => {
 
         setOrders(data);
@@ -72,13 +87,22 @@ const Admin = () => {
         method: "PUT",
 
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
         },
 
         body: JSON.stringify({ status })
       }
     )
-      .then(res => res.json())
+      .then(res => {
+
+        if (!res.ok) {
+          throw new Error("Update failed");
+        }
+
+        return res.json();
+
+      })
       .then(() => {
 
         toast.success("Đã cập nhật trạng thái!");
@@ -108,10 +132,22 @@ const Admin = () => {
     fetch(
       `https://my-app-ne36.onrender.com/api/order/${id}`,
       {
-        method: "DELETE"
+        method: "DELETE",
+
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       }
     )
-      .then(res => res.json())
+      .then(res => {
+
+        if (!res.ok) {
+          throw new Error("Delete failed");
+        }
+
+        return res.json();
+
+      })
       .then(() => {
 
         toast.success("Đã xóa đơn hàng!");

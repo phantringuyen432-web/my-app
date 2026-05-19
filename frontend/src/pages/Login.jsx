@@ -1,101 +1,195 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const Login = () => {
+
   const [form, setForm] = useState({
     email: "",
     password: ""
   });
 
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
+  // HANDLE CHANGE
   const handleChange = (e) => {
+
     setForm({
+
       ...form,
+
       [e.target.name]: e.target.value
+
     });
+
   };
 
-  const handleLogin = () => {
-    fetch("https://my-app-ne36.onrender.com/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(form)
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.token) {
-          // lưu token
-          localStorage.setItem(
-            "token",
-            data.token
-          );
-          localStorage.setItem(
-            "user",
-            JSON.stringify(data.user)
-          );
-          toast.success("Đăng nhập thành công");
-          // admin
-          if (data.user.role === "admin") {
-            navigate("/admin");
-          } else {
-            navigate("/");
-          }
-        } else {
-          toast.error(
-            data.message || "Đăng nhập thất bại"
-          );
+  // HANDLE LOGIN
+  const handleLogin = async () => {
+
+    // validate
+    if (!form.email || !form.password) {
+
+      toast.warning("Vui lòng nhập đầy đủ thông tin");
+
+      return;
+
+    }
+
+    try {
+
+      setLoading(true);
+
+      const res = await fetch(
+        "https://my-app-ne36.onrender.com/api/auth/login",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify(form)
         }
-      })
-      .catch(err => {
-        console.log(err);
-        toast.error("Lỗi server");
-      });
+      );
+
+      const data = await res.json();
+
+      // LOGIN SUCCESS
+      if (data.token) {
+
+        // save token
+        localStorage.setItem(
+          "token",
+          data.token
+        );
+
+        // save user
+        localStorage.setItem(
+          "user",
+          JSON.stringify(data.user)
+        );
+
+        toast.success("Đăng nhập thành công");
+
+        // admin
+        if (data.user.role === "admin") {
+
+          navigate("/admin");
+
+        }
+
+        // user
+        else {
+
+          navigate("/");
+
+        }
+
+      }
+
+      // LOGIN FAIL
+      else {
+
+        toast.error(
+          data.message || "Đăng nhập thất bại"
+        );
+
+      }
+
+    } catch (err) {
+
+      console.log(err);
+
+      toast.error("Lỗi server");
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-6 rounded-xl shadow w-80">
-        <h2 className="text-xl font-bold mb-4 text-center">Đăng nhập</h2>
 
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+
+      <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
+
+        {/* TITLE */}
+        <h2 className="text-3xl font-bold mb-6 text-center">
+          🔐 Đăng nhập
+        </h2>
+
+        {/* EMAIL */}
         <input
           name="email"
-          placeholder="Email"
-          className="w-full mb-2 p-2 border rounded"
+          type="email"
+          placeholder="Nhập email"
+          value={form.email}
           onChange={handleChange}
+          className="w-full mb-4 p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
+        {/* PASSWORD */}
         <input
           name="password"
           type="password"
-          placeholder="Password"
-          className="w-full mb-4 p-2 border rounded"
+          placeholder="Nhập mật khẩu"
+          value={form.password}
           onChange={handleChange}
+          className="w-full mb-4 p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <div className="text-center mb-2">
-        <Link
+
+        {/* REGISTER */}
+        <div className="text-center mb-5">
+
+          <Link
             to="/register"
             className="text-gray-600 text-sm hover:text-blue-600 transition"
-        >
-            Chưa có tài khoản? {" "}
+          >
+
+            Chưa có tài khoản?{" "}
+
             <span className="font-semibold text-blue-500 hover:underline">
-                Đăng ký ngay
+
+              Đăng ký ngay
+
             </span>
-        </Link>
+
+          </Link>
+
         </div>
+
+        {/* BUTTON */}
         <button
           onClick={handleLogin}
-          className="w-full bg-blue-500 text-white py-2 rounded"
+          disabled={loading}
+          className={`
+            w-full py-3 rounded-xl text-white font-semibold transition
+            ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-500 hover:bg-blue-600"
+            }
+          `}
         >
-          Đăng nhập
+
+          {loading
+            ? "Đang đăng nhập..."
+            : "Đăng nhập"}
+
         </button>
+
       </div>
+
     </div>
+
   );
+
 };
 
 export default Login;

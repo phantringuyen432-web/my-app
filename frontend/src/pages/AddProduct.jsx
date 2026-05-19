@@ -3,6 +3,9 @@ import { toast } from "react-toastify";
 
 const AddProduct = () => {
 
+  // TOKEN
+  const token = localStorage.getItem("token");
+
   // product info
   const [form, setForm] = useState({
     name: "",
@@ -22,43 +25,64 @@ const AddProduct = () => {
 
   // image
   const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState(null);
+
+  const [preview, setPreview] =
+    useState(null);
 
   // categories
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] =
+    useState([]);
 
   // loading
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
   // load category
   useEffect(() => {
-    fetch("https://my-app-ne36.onrender.com/api/category")
+
+    fetch(
+      "https://my-app-ne36.onrender.com/api/category"
+    )
       .then(res => res.json())
       .then(data => setCategories(data));
+
   }, []);
 
   // upload image
   const handleImageChange = (e) => {
+
     const file = e.target.files[0];
 
     setImage(file);
 
     if (file) {
-      setPreview(URL.createObjectURL(file));
+
+      setPreview(
+        URL.createObjectURL(file)
+      );
+
     }
+
   };
 
   // change variant
-  const handleVariantChange = (index, field, value) => {
+  const handleVariantChange = (
+    index,
+    field,
+    value
+  ) => {
+
     const updated = [...variants];
 
     updated[index][field] = value;
 
     setVariants(updated);
+
   };
 
   // add variant
   const addVariant = () => {
+
     setVariants([
       ...variants,
       {
@@ -67,17 +91,23 @@ const AddProduct = () => {
         stock: ""
       }
     ]);
+
   };
 
   // remove variant
   const removeVariant = (index) => {
-    const updated = variants.filter((_, i) => i !== index);
+
+    const updated =
+      variants.filter((_, i) => i !== index);
+
     setVariants(updated);
+
   };
 
   // submit
   const handleSubmit = async () => {
 
+    // validate
     if (
       !form.name ||
       !form.price ||
@@ -85,8 +115,32 @@ const AddProduct = () => {
       !form.description ||
       !image
     ) {
-      toast.warning("Vui lòng nhập đầy đủ thông tin!");
+
+      toast.warning(
+        "Vui lòng nhập đầy đủ thông tin!"
+      );
+
       return;
+
+    }
+
+    // validate variants
+    for (let v of variants) {
+
+      if (
+        !v.size ||
+        !v.color ||
+        !v.stock
+      ) {
+
+        toast.warning(
+          "Vui lòng nhập đầy đủ biến thể!"
+        );
+
+        return;
+
+      }
+
     }
 
     setLoading(true);
@@ -95,13 +149,32 @@ const AddProduct = () => {
 
       const formData = new FormData();
 
-      formData.append("name", form.name);
-      formData.append("price", form.price);
-      formData.append("description", form.description);
-      formData.append("category_id", form.category_id);
-      formData.append("image", image);
+      formData.append(
+        "name",
+        form.name
+      );
 
-      // gửi variants dạng JSON
+      formData.append(
+        "price",
+        form.price
+      );
+
+      formData.append(
+        "description",
+        form.description
+      );
+
+      formData.append(
+        "category_id",
+        form.category_id
+      );
+
+      formData.append(
+        "image",
+        image
+      );
+
+      // variants JSON
       formData.append(
         "variants",
         JSON.stringify(variants)
@@ -111,17 +184,38 @@ const AddProduct = () => {
         "https://my-app-ne36.onrender.com/api/product/add",
         {
           method: "POST",
+
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+
           body: formData
         }
       );
 
       const data = await res.json();
 
+      // lỗi
+      if (!res.ok) {
+
+        toast.error(
+          data.message ||
+          "Thêm sản phẩm thất bại!"
+        );
+
+        setLoading(false);
+
+        return;
+
+      }
+
       console.log(data);
 
-      toast.success("Thêm sản phẩm thành công!");
+      toast.success(
+        "Thêm sản phẩm thành công!"
+      );
 
-      // reset
+      // reset form
       setForm({
         name: "",
         price: "",
@@ -138,31 +232,39 @@ const AddProduct = () => {
       ]);
 
       setImage(null);
+
       setPreview(null);
 
-      document.getElementById("fileInput").value = "";
+      document.getElementById(
+        "fileInput"
+      ).value = "";
 
     } catch (err) {
 
       console.log(err);
-      toast.error("Lỗi thêm sản phẩm!");
+
+      toast.error("Lỗi server!");
 
     } finally {
 
       setLoading(false);
 
     }
+
   };
 
   return (
+
     <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow">
 
+      {/* TITLE */}
       <h1 className="text-3xl font-bold mb-6">
         Thêm sản phẩm
       </h1>
 
       {/* NAME */}
       <div className="mb-4">
+
         <label className="block mb-2 font-medium">
           Tên sản phẩm
         </label>
@@ -179,10 +281,12 @@ const AddProduct = () => {
           className="w-full border p-3 rounded-lg"
           placeholder="VD: Hoodie Nike"
         />
+
       </div>
 
       {/* PRICE */}
       <div className="mb-4">
+
         <label className="block mb-2 font-medium">
           Giá
         </label>
@@ -199,10 +303,12 @@ const AddProduct = () => {
           className="w-full border p-3 rounded-lg"
           placeholder="650000"
         />
+
       </div>
 
       {/* DESCRIPTION */}
       <div className="mb-4">
+
         <label className="block mb-2 font-medium">
           Mô tả
         </label>
@@ -219,10 +325,12 @@ const AddProduct = () => {
           className="w-full border p-3 rounded-lg"
           placeholder="Mô tả sản phẩm..."
         />
+
       </div>
 
       {/* CATEGORY */}
       <div className="mb-6">
+
         <label className="block mb-2 font-medium">
           Danh mục
         </label>
@@ -237,20 +345,29 @@ const AddProduct = () => {
           }
           className="w-full border p-3 rounded-lg"
         >
+
           <option value="">
             -- Chọn danh mục --
           </option>
 
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>
+
+            <option
+              key={c.id}
+              value={c.id}
+            >
               {c.name}
             </option>
+
           ))}
+
         </select>
+
       </div>
 
       {/* IMAGE */}
       <div className="mb-6">
+
         <label className="block mb-2 font-medium">
           Hình ảnh
         </label>
@@ -262,39 +379,46 @@ const AddProduct = () => {
         />
 
         {preview && (
+
           <img
             src={preview}
             alt="preview"
             className="mt-4 w-48 h-48 object-cover rounded-xl border"
           />
+
         )}
+
       </div>
 
       {/* VARIANTS */}
       <div className="mb-6">
 
         <div className="flex justify-between items-center mb-4">
+
           <h2 className="text-xl font-bold">
             Biến thể sản phẩm
           </h2>
 
           <button
+            type="button"
             onClick={addVariant}
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
           >
             + Thêm biến thể
           </button>
+
         </div>
 
         <div className="space-y-4">
 
           {variants.map((v, index) => (
+
             <div
               key={index}
               className="border rounded-xl p-4 bg-gray-50"
             >
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
                 {/* SIZE */}
                 <input
@@ -345,33 +469,49 @@ const AddProduct = () => {
 
               {/* REMOVE */}
               {variants.length > 1 && (
+
                 <button
-                  onClick={() => removeVariant(index)}
+                  type="button"
+                  onClick={() =>
+                    removeVariant(index)
+                  }
                   className="mt-3 text-red-500 hover:text-red-700"
                 >
                   Xóa biến thể
                 </button>
+
               )}
 
             </div>
+
           ))}
 
         </div>
+
       </div>
 
       {/* SUBMIT */}
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl text-lg font-semibold transition"
+        className={`w-full py-3 rounded-xl text-lg font-semibold transition
+          ${
+            loading
+              ? "bg-gray-400 cursor-not-allowed text-white"
+              : "bg-green-500 hover:bg-green-600 text-white"
+          }`}
       >
+
         {loading
           ? "Đang thêm..."
           : "Thêm sản phẩm"}
+
       </button>
 
     </div>
+
   );
+
 };
 
 export default AddProduct;

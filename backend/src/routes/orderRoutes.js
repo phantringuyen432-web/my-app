@@ -22,21 +22,12 @@ const {
 // tạo đơn hàng
 router.post("/", createOrder);
 
-// tất cả đơn hàng admin
-// ĐẶT TRƯỚC /:id để tránh bị nuốt route
+// admin - tất cả đơn hàng
+// đặt lên trước để không bị route /:id nuốt
 router.get("/admin/all", getAllOrders);
 
 // đơn hàng theo user
 router.get("/user/:userId", getOrdersByUser);
-
-// chi tiết đơn hàng
-router.get("/:id", getOrderDetail);
-
-// cập nhật trạng thái
-router.put("/:id", updateStatus);
-
-// xóa đơn hàng
-router.delete("/:id", deleteOrder);
 
 // ============================
 // REVENUE
@@ -59,5 +50,18 @@ router.get(
   "/revenue/category",
   getRevenueByCategory
 );
+
+// ============================
+// ORDER DETAIL
+// ============================
+
+// chi tiết đơn hàng
+router.get("/:id", getOrderDetail);
+
+// cập nhật trạng thái
+router.put("/:id", updateStatus);
+
+// xóa đơn hàng
+router.delete("/:id", deleteOrder);
 
 module.exports = router;
