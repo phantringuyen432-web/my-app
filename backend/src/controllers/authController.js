@@ -36,7 +36,10 @@ exports.register = async (req, res) => {
     }
 
     // hash password
-    const hashed = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(
+      password,
+      10
+    );
 
     // tạo OTP
     const otp = Math.floor(
@@ -71,7 +74,7 @@ exports.register = async (req, res) => {
       ]
     );
 
-    // gửi OTP bằng Brevo API
+    // gửi OTP
     await sendOTP(email, otp);
 
     res.json({
@@ -125,7 +128,9 @@ exports.verifyOTP = async (req, res) => {
     const user = result.rows[0];
 
     // kiểm tra OTP
-    if (String(user.otp_code) !== String(otp)) {
+    if (
+      String(user.otp_code) !== String(otp)
+    ) {
 
       return res.status(400).json({
         message: "OTP sai"
@@ -134,7 +139,10 @@ exports.verifyOTP = async (req, res) => {
     }
 
     // kiểm tra hết hạn
-    if (new Date() > new Date(user.otp_expire)) {
+    if (
+      new Date() >
+      new Date(user.otp_expire)
+    ) {
 
       return res.status(400).json({
         message: "OTP đã hết hạn"
@@ -146,7 +154,9 @@ exports.verifyOTP = async (req, res) => {
     await db.query(
       `
       UPDATE users
-      SET is_verified = true
+      SET is_verified = true,
+          otp_code = null,
+          otp_expire = null
       WHERE email = $1
       `,
       [email]
@@ -180,6 +190,7 @@ exports.login = async (req, res) => {
       password
     } = req.body;
 
+    // tìm user
     const results = await db.query(
       `
       SELECT *
@@ -189,6 +200,7 @@ exports.login = async (req, res) => {
       [email]
     );
 
+    // không tồn tại
     if (results.rows.length === 0) {
 
       return res.status(400).json({
@@ -203,7 +215,8 @@ exports.login = async (req, res) => {
     if (!user.is_verified) {
 
       return res.status(400).json({
-        message: "Vui lòng xác thực email trước"
+        message:
+          "Vui lòng xác thực email trước"
       });
 
     }
@@ -230,7 +243,7 @@ exports.login = async (req, res) => {
         role: user.role
       },
 
-      "SECRET_KEY",
+      process.env.JWT_SECRET,
 
       {
         expiresIn: "1d"
@@ -238,6 +251,7 @@ exports.login = async (req, res) => {
 
     );
 
+    // response
     res.json({
 
       message: "Đăng nhập thành công",
@@ -245,9 +259,15 @@ exports.login = async (req, res) => {
       token,
 
       user: {
+
         id: user.id,
+
         username: user.username,
+
+        email: user.email,
+
         role: user.role
+
       }
 
     });
