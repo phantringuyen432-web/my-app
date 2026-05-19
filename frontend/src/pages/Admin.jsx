@@ -1,120 +1,293 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const Admin = () => {
-  const [orders, setOrders] = useState([]);
-  const user = JSON.parse(localStorage.getItem("user"));
 
+  const [orders, setOrders] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+
+  const user = JSON.parse(
+    localStorage.getItem("user")
+  );
+
+  // check admin
   if (!user || user.role !== "admin") {
+
     return (
-      <h1 className="text-center mt-10 text-red-500">
+      <h1 className="text-center mt-10 text-red-500 text-2xl">
         Không có quyền truy cập
       </h1>
     );
+
   }
 
-  // load danh sách đơn
+  // LOAD ORDERS
   const fetchOrders = () => {
-    fetch("https://my-app-ne36.onrender.com/api/order/admin/all")
+
+    setLoading(true);
+
+    fetch(
+      "https://my-app-ne36.onrender.com/api/order/admin/all"
+    )
       .then(res => res.json())
-      .then(data => setOrders(data));
+      .then(data => {
+
+        setOrders(data);
+
+        setLoading(false);
+
+      })
+      .catch(err => {
+
+        console.log(err);
+
+        toast.error("Lỗi tải đơn hàng");
+
+        setLoading(false);
+
+      });
+
   };
 
   useEffect(() => {
+
     fetchOrders();
+
   }, []);
 
-  // update trạng thái
+  // UPDATE STATUS
   const updateStatus = (id, status) => {
-    fetch(`https://my-app-ne36.onrender.com/api/order/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status })
-    })
+
+    fetch(
+      `https://my-app-ne36.onrender.com/api/order/${id}`,
+      {
+        method: "PUT",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({ status })
+      }
+    )
       .then(res => res.json())
       .then(() => {
-        toast.success("Đã cập nhật!");
+
+        toast.success("Đã cập nhật trạng thái!");
+
         fetchOrders();
+
+      })
+      .catch(err => {
+
+        console.log(err);
+
+        toast.error("Cập nhật thất bại");
+
       });
+
   };
 
-  // xóa đơn hàng
+  // DELETE ORDER
   const deleteOrder = (id) => {
+
     const confirmDelete = window.confirm(
-      "Đơn hàng đã giao xong. Bạn có muốn xóa không?"
+      "Bạn có chắc muốn xóa đơn hàng?"
     );
 
     if (!confirmDelete) return;
 
-    fetch(`https://my-app-ne36.onrender.com/api/order/${id}`, {
-      method: "DELETE"
-    })
+    fetch(
+      `https://my-app-ne36.onrender.com/api/order/${id}`,
+      {
+        method: "DELETE"
+      }
+    )
       .then(res => res.json())
       .then(() => {
+
         toast.success("Đã xóa đơn hàng!");
+
         fetchOrders();
+
+      })
+      .catch(err => {
+
+        console.log(err);
+
+        toast.error("Xóa thất bại");
+
       });
+
   };
 
-  const location = useLocation();
+  // LOADING
+  if (loading) {
+
+    return (
+
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+
+        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+
+      </div>
+
+    );
+
+  }
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
 
-      {/* CONTENT */}
-      <div className="flex-1 p-10">
-        <h1 className="text-3xl font-bold mb-6">
-          Quản lý đơn hàng
-        </h1>
+    <div className="min-h-screen bg-gray-100 p-8">
 
-        <div className="bg-white rounded-xl shadow p-6">
-          {orders.map(order => (
+      {/* TITLE */}
+      <h1 className="text-4xl font-bold mb-8">
+        📦 Quản lý đơn hàng
+      </h1>
+
+      {/* ORDERS */}
+      <div className="bg-white rounded-2xl shadow overflow-hidden">
+
+        {orders.length === 0 ? (
+
+          <div className="p-10 text-center text-gray-500">
+            Chưa có đơn hàng
+          </div>
+
+        ) : (
+
+          orders.map(order => (
+
             <div
               key={order.id}
-              className="border-b py-4 flex justify-between items-center"
+              className="border-b p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5"
             >
-              <div>
-                <p>🆔 #{order.id}</p>
-                <p>👤 {order.username}</p>
-                <p>💰 {order.total.toLocaleString()} VND</p>
-                <p>📌 {order.status}</p>
-              </div>
 
-              <div className="flex gap-2 items-center">
+              {/* LEFT */}
+              <div className="space-y-2">
 
-                {order.status === "pending" && (
-                  <button
-                    onClick={() => updateStatus(order.id, "paid")}
-                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded transition"
+                <p className="font-bold text-lg">
+                  🆔 Đơn hàng #{order.id}
+                </p>
+
+                <p>
+                  👤 Khách hàng:
+                  <span className="font-semibold ml-2">
+                    {order.username}
+                  </span>
+                </p>
+
+                <p>
+                  💰 Tổng tiền:
+                  <span className="text-red-500 font-bold ml-2">
+                    {Number(order.total).toLocaleString()} VND
+                  </span>
+                </p>
+
+                <p>
+                  📌 Trạng thái:
+
+                  <span
+                    className={`
+                      ml-2 font-semibold
+                      ${
+                        order.status === "pending"
+                          ? "text-yellow-500"
+                          : order.status === "confirmed"
+                          ? "text-blue-500"
+                          : order.status === "shipping"
+                          ? "text-purple-500"
+                          : order.status === "completed"
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }
+                    `}
                   >
-                    Xác nhận thanh toán
+
+                    {
+                      order.status === "pending"
+                        ? "Chờ xác nhận"
+                        : order.status === "confirmed"
+                        ? "Đã xác nhận"
+                        : order.status === "shipping"
+                        ? "Đang giao"
+                        : order.status === "completed"
+                        ? "Hoàn thành"
+                        : "Đã hủy"
+                    }
+
+                  </span>
+
+                </p>
+
+              </div>
+
+              {/* RIGHT */}
+              <div className="flex flex-wrap gap-3 items-center">
+
+                {/* STATUS SELECT */}
+                <select
+                  value={order.status}
+                  onChange={(e) =>
+                    updateStatus(
+                      order.id,
+                      e.target.value
+                    )
+                  }
+                  className="border px-4 py-2 rounded-xl"
+                >
+
+                  <option value="pending">
+                    Chờ xác nhận
+                  </option>
+
+                  <option value="confirmed">
+                    Đã xác nhận
+                  </option>
+
+                  <option value="shipping">
+                    Đang giao
+                  </option>
+
+                  <option value="completed">
+                    Hoàn thành
+                  </option>
+
+                  <option value="cancelled">
+                    Đã hủy
+                  </option>
+
+                </select>
+
+                {/* DELETE */}
+                {order.status === "completed" && (
+
+                  <button
+                    onClick={() =>
+                      deleteOrder(order.id)
+                    }
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl transition"
+                  >
+                    Xóa đơn
                   </button>
-                )}
 
-                {order.status === "paid" && (
-                  <>
-                    <span className="text-green-600 font-semibold">
-                      ✔ Đã giao xong
-                    </span>
-
-                    <button
-                      onClick={() => deleteOrder(order.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"
-                    >
-                      Xóa đơn
-                    </button>
-                  </>
                 )}
 
               </div>
+
             </div>
-          ))}
-        </div>
+
+          ))
+
+        )}
+
       </div>
 
     </div>
+
   );
+
 };
 
 export default Admin;

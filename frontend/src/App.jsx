@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
-import { toast } from "react-toastify";
+
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import Shop from "./pages/Shop";
 import CartPage from "./pages/CartPage";
 import Checkout from "./pages/Checkout";
@@ -10,29 +13,81 @@ import VerifyOTP from "./pages/VerifyOTP";
 import OrderHistory from "./pages/OrderHistory";
 import OrderDetail from "./pages/OrderDetail";
 import Admin from "./pages/Admin";
-import ProtectedRoute from "./components/ProtectedRoute";
 import AddProduct from "./pages/AddProduct";
-import AdminLayout from "./components/AdminLayout";
-import EditProduct from "./pages/EditProduct"
-import ProductList from"./pages/ProductList"
-import Dashboard from "./pages/Dashboard"
+import EditProduct from "./pages/EditProduct";
+import ProductList from "./pages/ProductList";
+import Dashboard from "./pages/Dashboard";
 import ProductDetail from "./pages/ProductDetail";
 
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdminLayout from "./components/AdminLayout";
+
 function App() {
+
   const [products, setProducts] = useState([]);
-  //Thông báo
-  const [message, setMessage] = useState("");
-  //Lưu Cart khi reload
+
+  // CART
   const [cart, setCart] = useState(() => {
+
     const saved = localStorage.getItem("cart");
+
     return saved ? JSON.parse(saved) : [];
+
   });
 
+  // lưu cart
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
+
+    localStorage.setItem(
+      "cart",
+      JSON.stringify(cart)
+    );
+
   }, [cart]);
 
+  // load products
+  useEffect(() => {
+
+    fetch(
+      "https://my-app-ne36.onrender.com/api/product"
+    )
+      .then(res => res.json())
+      .then(data => {
+
+        if (Array.isArray(data)) {
+          setProducts(data);
+        } else {
+          setProducts([]);
+        }
+
+      })
+      .catch(err => {
+
+        console.log(err);
+
+        setProducts([]);
+
+      });
+
+  }, []);
+
+  // ADD TO CART
   const addToCart = (product) => {
+
+    const user = JSON.parse(
+      localStorage.getItem("user")
+    );
+
+    // chưa login
+    if (!user) {
+
+      toast.warning(
+        "Vui lòng đăng nhập!"
+      );
+
+      return;
+
+    }
 
     const existingIndex = cart.findIndex(
       item =>
@@ -41,7 +96,7 @@ function App() {
 
     let newCart = [...cart];
 
-    // nếu variant đã tồn tại
+    // variant đã tồn tại
     if (existingIndex !== -1) {
 
       // check stock
@@ -55,6 +110,7 @@ function App() {
         );
 
         return;
+
       }
 
       // tăng quantity
@@ -62,7 +118,7 @@ function App() {
 
     }
 
-    // nếu chưa tồn tại
+    // variant chưa tồn tại
     else {
 
       newCart.push({
@@ -75,87 +131,144 @@ function App() {
     // update state
     setCart(newCart);
 
-    // thông báo
-    setMessage(
+    // toast
+    toast.success(
       `Đã thêm "${product.name}" vào giỏ`
     );
 
-    setTimeout(() => {
-      setMessage("");
-    }, 2000);
-
   };
 
-  useEffect(() => {
-    fetch("https://my-app-ne36.onrender.com/api/product")// trùng với dòng bên backend index.js
-      .then(res => res.json())
-      .then(data => setProducts(data));
-  }, []);
-
   return (
-  <>
-    {/* THÔNG BÁO */}
-    {message && (
-      <div className="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
-        {message}
-      </div>
-    )}
 
-    {/* ROUTER */}
-    <Routes> 
-      {/* Routes của product */}
-      <Route 
-        path="/" 
-        element={<Shop products={products} addToCart={addToCart} />} 
+    <>
+
+      {/* TOAST */}
+      <ToastContainer
+        position="top-right"
+        autoClose={2000}
       />
-      {/* Routes của giỏ hàng */}
-      <Route 
-        path="/cart" 
-        element={<CartPage cart={cart} setCart={setCart} />} 
-      />
-      {/* Routes của Checkout */}
-      <Route
-        path="/checkout"
-        element={<Checkout cart={cart} setCart={setCart} />}
-      />
-      {/* Routes của Login */}
-      <Route path="/login" element={<Login />} />
-      {/* Routes của Register */}
-      <Route path="/register" element={<Register />} /> 
-      {/* Routes của Verify */}
-      <Route path="/verify" element={<VerifyOTP />} />
-      {/* Routes của OrderHistory */}
-      <Route path="/orders" element={<OrderHistory />} />
-      
-      <Route path="/orders/:id" element={<OrderDetail />} />
 
-      <Route path="/admin" element={<Admin />} />
+      {/* ROUTES */}
+      <Routes>
 
-      <Route path="/product/:id" element={
-          <ProductDetail addToCart={addToCart} />
-      } />
+        {/* SHOP */}
+        <Route
+          path="/"
+          element={
+            <Shop
+              products={products}
+              addToCart={addToCart}
+            />
+          }
+        />
 
-      {/* ADMIN ROUTES */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute role="admin">
-            <AdminLayout />
-          </ProtectedRoute>
-        }
-      >
-        {/* /admin */}
-        <Route index element={<Admin />} />
+        {/* PRODUCT DETAIL */}
+        <Route
+          path="/product/:id"
+          element={
+            <ProductDetail
+              addToCart={addToCart}
+            />
+          }
+        />
 
-        {/* /admin/add-product */}
-        <Route path="add-product" element={<AddProduct />} />
-        <Route path="product-list" element={<ProductList />} />
-        <Route path="edit-product/:id" element={<EditProduct />} />
-        <Route path="dashboard" element={<Dashboard />} />
-      </Route>
-    </Routes>
-  </>
+        {/* CART */}
+        <Route
+          path="/cart"
+          element={
+            <CartPage
+              cart={cart}
+              setCart={setCart}
+            />
+          }
+        />
+
+        {/* CHECKOUT */}
+        <Route
+          path="/checkout"
+          element={
+            <Checkout
+              cart={cart}
+              setCart={setCart}
+            />
+          }
+        />
+
+        {/* AUTH */}
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        <Route
+          path="/verify"
+          element={<VerifyOTP />}
+        />
+
+        {/* ORDERS */}
+        <Route
+          path="/orders"
+          element={<OrderHistory />}
+        />
+
+        <Route
+          path="/orders/:id"
+          element={<OrderDetail />}
+        />
+
+        {/* ADMIN */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+
+          {/* dashboard đơn hàng */}
+          <Route
+            index
+            element={<Admin />}
+          />
+
+          {/* dashboard doanh thu */}
+          <Route
+            path="dashboard"
+            element={<Dashboard />}
+          />
+
+          {/* product list */}
+          <Route
+            path="product-list"
+            element={<ProductList />}
+          />
+
+          {/* add product */}
+          <Route
+            path="add-product"
+            element={<AddProduct />}
+          />
+
+          {/* edit product */}
+          <Route
+            path="edit-product/:id"
+            element={<EditProduct />}
+          />
+
+        </Route>
+
+      </Routes>
+
+    </>
+
   );
+
 }
 
 export default App;

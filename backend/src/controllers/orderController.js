@@ -34,17 +34,54 @@ exports.createOrder = async (req, res) => {
     const orderResult = await db.query(
       `
       INSERT INTO orders
-      (user_id, total)
-      VALUES ($1, $2)
+      (
+        user_id,
+        total,
+        status
+      )
+      VALUES ($1, $2, $3)
       RETURNING id
       `,
-      [userId, total]
+      [
+        userId,
+        total,
+        "pending"
+      ]
     );
 
     const orderId = orderResult.rows[0].id;
 
     // insert order items + update stock
     for (const item of items) {
+
+      // check stock trước
+      const stockResult = await db.query(
+        `
+        SELECT stock
+        FROM product_variants
+        WHERE id = $1
+        `,
+        [item.variant_id]
+      );
+
+      if (stockResult.rows.length === 0) {
+
+        return res.status(400).json({
+          message: "Biến thể sản phẩm không tồn tại"
+        });
+
+      }
+
+      const currentStock =
+        stockResult.rows[0].stock;
+
+      if (currentStock < item.quantity) {
+
+        return res.status(400).json({
+          message: `Sản phẩm ${item.name} không đủ tồn kho`
+        });
+
+      }
 
       // insert order item
       await db.query(
@@ -99,7 +136,9 @@ exports.createOrder = async (req, res) => {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 
@@ -130,7 +169,9 @@ exports.getOrdersByUser = async (req, res) => {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 
@@ -165,7 +206,9 @@ exports.getOrderDetail = async (req, res) => {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 
@@ -196,7 +239,9 @@ exports.getAllOrders = async (req, res) => {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 
@@ -213,6 +258,43 @@ exports.updateStatus = async (req, res) => {
 
     const id = req.params.id;
 
+    // danh sách status hợp lệ
+    const validStatus = [
+      "pending",
+      "confirmed",
+      "shipping",
+      "completed",
+      "cancelled"
+    ];
+
+    // validate status
+    if (!validStatus.includes(status)) {
+
+      return res.status(400).json({
+        message: "Status không hợp lệ"
+      });
+
+    }
+
+    // check order tồn tại
+    const orderResult = await db.query(
+      `
+      SELECT *
+      FROM orders
+      WHERE id = $1
+      `,
+      [id]
+    );
+
+    if (orderResult.rows.length === 0) {
+
+      return res.status(404).json({
+        message: "Không tìm thấy đơn hàng"
+      });
+
+    }
+
+    // update
     await db.query(
       `
       UPDATE orders
@@ -223,14 +305,16 @@ exports.updateStatus = async (req, res) => {
     );
 
     res.json({
-      message: "Cập nhật thành công"
+      message: "Cập nhật trạng thái thành công"
     });
 
   } catch (err) {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 
@@ -251,7 +335,7 @@ exports.getRevenueByMonth = async (req, res) => {
         EXTRACT(MONTH FROM created_at) as month,
         SUM(total) as revenue
       FROM orders
-      WHERE status = 'paid'
+      WHERE status = 'completed'
         AND EXTRACT(YEAR FROM created_at) = $1
       GROUP BY month
       ORDER BY month
@@ -265,7 +349,9 @@ exports.getRevenueByMonth = async (req, res) => {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 
@@ -284,7 +370,7 @@ exports.getRevenueByYear = async (req, res) => {
         EXTRACT(YEAR FROM created_at) as year,
         SUM(total) as revenue
       FROM orders
-      WHERE status = 'paid'
+      WHERE status = 'completed'
       GROUP BY year
       ORDER BY year
       `
@@ -296,7 +382,9 @@ exports.getRevenueByYear = async (req, res) => {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 
@@ -325,7 +413,7 @@ exports.getRevenueByCategory = async (req, res) => {
       JOIN orders o
         ON oi.order_id = o.id
 
-      WHERE o.status = 'paid'
+      WHERE o.status = 'completed'
 
       GROUP BY c.id, c.name
       `
@@ -337,7 +425,9 @@ exports.getRevenueByCategory = async (req, res) => {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 
@@ -351,6 +441,24 @@ exports.deleteOrder = async (req, res) => {
   try {
 
     const id = req.params.id;
+
+    // check tồn tại
+    const orderResult = await db.query(
+      `
+      SELECT *
+      FROM orders
+      WHERE id = $1
+      `,
+      [id]
+    );
+
+    if (orderResult.rows.length === 0) {
+
+      return res.status(404).json({
+        message: "Không tìm thấy đơn hàng"
+      });
+
+    }
 
     // xóa order_items trước
     await db.query(
@@ -378,7 +486,9 @@ exports.deleteOrder = async (req, res) => {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 

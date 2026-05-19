@@ -1,7 +1,8 @@
-const express = require('express');
+const express = require("express");
+
 const router = express.Router();
 
-// import các function từ controller
+// controllers
 const {
   createOrder,
   getOrdersByUser,
@@ -12,19 +13,51 @@ const {
   getRevenueByYear,
   getRevenueByCategory,
   deleteOrder
-} = require('../controllers/orderController');
+} = require("../controllers/orderController");
 
-//Order
-router.post('/', createOrder);
-router.get('/user/:userId', getOrdersByUser);
-router.get('/:id', getOrderDetail);
-router.get('/admin/all', getAllOrders);
-router.put('/:id', updateStatus);
+// ============================
+// ORDER
+// ============================
 
-// Revenue
-router.get("/revenue/month/:year", getRevenueByMonth);
-router.get("/revenue/year", getRevenueByYear);
-router.get("/revenue/category", getRevenueByCategory);
+// tạo đơn hàng
+router.post("/", createOrder);
+
+// tất cả đơn hàng admin
+// ĐẶT TRƯỚC /:id để tránh bị nuốt route
+router.get("/admin/all", getAllOrders);
+
+// đơn hàng theo user
+router.get("/user/:userId", getOrdersByUser);
+
+// chi tiết đơn hàng
+router.get("/:id", getOrderDetail);
+
+// cập nhật trạng thái
+router.put("/:id", updateStatus);
+
+// xóa đơn hàng
 router.delete("/:id", deleteOrder);
+
+// ============================
+// REVENUE
+// ============================
+
+// doanh thu theo tháng
+router.get(
+  "/revenue/month/:year",
+  getRevenueByMonth
+);
+
+// doanh thu theo năm
+router.get(
+  "/revenue/year",
+  getRevenueByYear
+);
+
+// doanh thu theo category
+router.get(
+  "/revenue/category",
+  getRevenueByCategory
+);
 
 module.exports = router;
