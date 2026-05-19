@@ -8,6 +8,9 @@ const EditProduct = () => {
 
   const navigate = useNavigate();
 
+  // TOKEN
+  const token = localStorage.getItem("token");
+
   // =========================
   // STATES
   // =========================
@@ -39,10 +42,19 @@ const EditProduct = () => {
       "https://my-app-ne36.onrender.com/api/category"
     )
       .then(res => res.json())
-      .then(data => setCategories(data))
+      .then(data => {
+
+        if (Array.isArray(data)) {
+          setCategories(data);
+        }
+
+      })
       .catch(err => {
+
         console.log(err);
+
         toast.error("Lỗi tải danh mục");
+
       });
 
   }, []);
@@ -59,6 +71,16 @@ const EditProduct = () => {
     )
       .then(res => res.json())
       .then(data => {
+
+        if (!data.product) {
+
+          toast.error("Không tìm thấy sản phẩm");
+
+          navigate("/admin/product-list");
+
+          return;
+
+        }
 
         const product = data.product;
 
@@ -86,7 +108,25 @@ const EditProduct = () => {
 
       });
 
-  }, [id]);
+  }, [id, navigate]);
+
+  // =========================
+  // CLEANUP PREVIEW
+  // =========================
+  useEffect(() => {
+
+    return () => {
+
+      if (
+        preview &&
+        preview.startsWith("blob:")
+      ) {
+        URL.revokeObjectURL(preview);
+      }
+
+    };
+
+  }, [preview]);
 
   // =========================
   // IMAGE
@@ -162,16 +202,27 @@ const EditProduct = () => {
   // =========================
   const handleSubmit = async () => {
 
-    // VALIDATE
+    // validate
     if (
-      !form.name ||
+      !form.name.trim() ||
       !form.price ||
       !form.category_id ||
-      !form.description
+      !form.description.trim()
     ) {
 
       toast.warning(
         "Vui lòng nhập đầy đủ thông tin"
+      );
+
+      return;
+
+    }
+
+    // validate giá
+    if (Number(form.price) <= 0) {
+
+      toast.warning(
+        "Giá sản phẩm phải lớn hơn 0"
       );
 
       return;
@@ -195,6 +246,16 @@ const EditProduct = () => {
 
       }
 
+      if (Number(v.stock) < 0) {
+
+        toast.warning(
+          "Tồn kho không hợp lệ"
+        );
+
+        return;
+
+      }
+
     }
 
     setSaving(true);
@@ -203,9 +264,15 @@ const EditProduct = () => {
 
       const formData = new FormData();
 
-      formData.append("name", form.name);
+      formData.append(
+        "name",
+        form.name
+      );
 
-      formData.append("price", form.price);
+      formData.append(
+        "price",
+        form.price
+      );
 
       formData.append(
         "category_id",
@@ -236,6 +303,11 @@ const EditProduct = () => {
         `https://my-app-ne36.onrender.com/api/product/${id}`,
         {
           method: "PUT",
+
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+
           body: formData
         }
       );
@@ -302,7 +374,6 @@ const EditProduct = () => {
 
     <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow">
 
-      {/* TITLE */}
       <h1 className="text-3xl font-bold mb-8">
         ✏️ Sửa sản phẩm
       </h1>
@@ -324,7 +395,6 @@ const EditProduct = () => {
             })
           }
           className="w-full border p-3 rounded-xl"
-          placeholder="Tên sản phẩm..."
         />
 
       </div>
@@ -346,7 +416,6 @@ const EditProduct = () => {
             })
           }
           className="w-full border p-3 rounded-xl"
-          placeholder="650000"
         />
 
       </div>
@@ -405,7 +474,6 @@ const EditProduct = () => {
             })
           }
           className="w-full border p-3 rounded-xl"
-          placeholder="Mô tả sản phẩm..."
         />
 
       </div>
@@ -444,6 +512,7 @@ const EditProduct = () => {
           </h2>
 
           <button
+            type="button"
             onClick={addVariant}
             className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-xl transition"
           >
@@ -461,7 +530,6 @@ const EditProduct = () => {
               className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-2xl border"
             >
 
-              {/* SIZE */}
               <input
                 type="text"
                 placeholder="Size"
@@ -476,7 +544,6 @@ const EditProduct = () => {
                 className="border p-3 rounded-xl"
               />
 
-              {/* COLOR */}
               <input
                 type="text"
                 placeholder="Màu"
@@ -491,7 +558,6 @@ const EditProduct = () => {
                 className="border p-3 rounded-xl"
               />
 
-              {/* STOCK */}
               <input
                 type="number"
                 placeholder="Tồn kho"
@@ -506,8 +572,8 @@ const EditProduct = () => {
                 className="border p-3 rounded-xl"
               />
 
-              {/* REMOVE */}
               <button
+                type="button"
                 onClick={() =>
                   removeVariant(index)
                 }

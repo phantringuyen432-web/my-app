@@ -3,10 +3,14 @@ import { toast } from "react-toastify";
 
 const AddProduct = () => {
 
+  // =========================
   // TOKEN
+  // =========================
   const token = localStorage.getItem("token");
 
-  // product info
+  // =========================
+  // PRODUCT FORM
+  // =========================
   const [form, setForm] = useState({
     name: "",
     price: "",
@@ -14,7 +18,9 @@ const AddProduct = () => {
     category_id: ""
   });
 
-  // variants
+  // =========================
+  // VARIANTS
+  // =========================
   const [variants, setVariants] = useState([
     {
       size: "",
@@ -23,49 +29,109 @@ const AddProduct = () => {
     }
   ]);
 
-  // image
+  // =========================
+  // IMAGE
+  // =========================
   const [image, setImage] = useState(null);
 
   const [preview, setPreview] =
     useState(null);
 
-  // categories
+  // =========================
+  // CATEGORIES
+  // =========================
   const [categories, setCategories] =
     useState([]);
 
-  // loading
+  // =========================
+  // LOADING
+  // =========================
   const [loading, setLoading] =
     useState(false);
 
-  // load category
+  // =========================
+  // FETCH CATEGORIES
+  // =========================
   useEffect(() => {
 
     fetch(
       "https://my-app-ne36.onrender.com/api/category"
     )
       .then(res => res.json())
-      .then(data => setCategories(data));
+
+      .then(data => {
+
+        if (Array.isArray(data)) {
+
+          setCategories(data);
+
+        } else {
+
+          setCategories([]);
+
+        }
+
+      })
+
+      .catch(err => {
+
+        console.log(err);
+
+        toast.error(
+          "Lỗi tải danh mục"
+        );
+
+      });
 
   }, []);
 
-  // upload image
+  // =========================
+  // HANDLE IMAGE
+  // =========================
   const handleImageChange = (e) => {
 
     const file = e.target.files[0];
 
-    setImage(file);
+    if (!file) return;
 
-    if (file) {
+    // check image type
+    if (
+      !file.type.startsWith("image/")
+    ) {
 
-      setPreview(
-        URL.createObjectURL(file)
+      toast.warning(
+        "Vui lòng chọn file ảnh"
       );
+
+      return;
 
     }
 
+    // check size
+    if (
+      file.size >
+      5 * 1024 * 1024
+    ) {
+
+      toast.warning(
+        "Ảnh tối đa 5MB"
+      );
+
+      return;
+
+    }
+
+    setImage(file);
+
+    setPreview(
+      URL.createObjectURL(file)
+    );
+
   };
 
-  // change variant
+  // =========================
+  // HANDLE VARIANT CHANGE
+  // =========================
   const handleVariantChange = (
     index,
     field,
@@ -80,7 +146,9 @@ const AddProduct = () => {
 
   };
 
-  // add variant
+  // =========================
+  // ADD VARIANT
+  // =========================
   const addVariant = () => {
 
     setVariants([
@@ -94,25 +162,68 @@ const AddProduct = () => {
 
   };
 
-  // remove variant
+  // =========================
+  // REMOVE VARIANT
+  // =========================
   const removeVariant = (index) => {
 
     const updated =
-      variants.filter((_, i) => i !== index);
+      variants.filter(
+        (_, i) => i !== index
+      );
 
     setVariants(updated);
 
   };
 
-  // submit
+  // =========================
+  // RESET FORM
+  // =========================
+  const resetForm = () => {
+
+    setForm({
+      name: "",
+      price: "",
+      description: "",
+      category_id: ""
+    });
+
+    setVariants([
+      {
+        size: "",
+        color: "",
+        stock: ""
+      }
+    ]);
+
+    setImage(null);
+
+    setPreview(null);
+
+    const fileInput =
+      document.getElementById(
+        "fileInput"
+      );
+
+    if (fileInput) {
+
+      fileInput.value = "";
+
+    }
+
+  };
+
+  // =========================
+  // SUBMIT
+  // =========================
   const handleSubmit = async () => {
 
-    // validate
+    // validate form
     if (
-      !form.name ||
+      !form.name.trim() ||
       !form.price ||
       !form.category_id ||
-      !form.description ||
+      !form.description.trim() ||
       !image
     ) {
 
@@ -124,17 +235,42 @@ const AddProduct = () => {
 
     }
 
+    // validate price
+    if (
+      Number(form.price) <= 0
+    ) {
+
+      toast.warning(
+        "Giá sản phẩm phải lớn hơn 0"
+      );
+
+      return;
+
+    }
+
     // validate variants
     for (let v of variants) {
 
       if (
-        !v.size ||
-        !v.color ||
+        !v.size.trim() ||
+        !v.color.trim() ||
         !v.stock
       ) {
 
         toast.warning(
           "Vui lòng nhập đầy đủ biến thể!"
+        );
+
+        return;
+
+      }
+
+      if (
+        Number(v.stock) < 0
+      ) {
+
+        toast.warning(
+          "Stock không hợp lệ"
         );
 
         return;
@@ -147,7 +283,8 @@ const AddProduct = () => {
 
     try {
 
-      const formData = new FormData();
+      const formData =
+        new FormData();
 
       formData.append(
         "name",
@@ -174,7 +311,6 @@ const AddProduct = () => {
         image
       );
 
-      // variants JSON
       formData.append(
         "variants",
         JSON.stringify(variants)
@@ -193,9 +329,34 @@ const AddProduct = () => {
         }
       );
 
-      const data = await res.json();
+      const data =
+        await res.json();
 
-      // lỗi
+      // unauthorized
+      if (
+        res.status === 401
+      ) {
+
+        toast.error(
+          "Phiên đăng nhập hết hạn"
+        );
+
+        localStorage.removeItem(
+          "token"
+        );
+
+        localStorage.removeItem(
+          "user"
+        );
+
+        window.location.href =
+          "/login";
+
+        return;
+
+      }
+
+      // error
       if (!res.ok) {
 
         toast.error(
@@ -203,47 +364,25 @@ const AddProduct = () => {
           "Thêm sản phẩm thất bại!"
         );
 
-        setLoading(false);
-
         return;
 
       }
-
-      console.log(data);
 
       toast.success(
         "Thêm sản phẩm thành công!"
       );
 
-      // reset form
-      setForm({
-        name: "",
-        price: "",
-        description: "",
-        category_id: ""
-      });
+      console.log(data);
 
-      setVariants([
-        {
-          size: "",
-          color: "",
-          stock: ""
-        }
-      ]);
-
-      setImage(null);
-
-      setPreview(null);
-
-      document.getElementById(
-        "fileInput"
-      ).value = "";
+      resetForm();
 
     } catch (err) {
 
       console.log(err);
 
-      toast.error("Lỗi server!");
+      toast.error(
+        "Lỗi server!"
+      );
 
     } finally {
 
@@ -340,7 +479,8 @@ const AddProduct = () => {
           onChange={(e) =>
             setForm({
               ...form,
-              category_id: e.target.value
+              category_id:
+                e.target.value
             })
           }
           className="w-full border p-3 rounded-lg"
@@ -375,7 +515,10 @@ const AddProduct = () => {
         <input
           id="fileInput"
           type="file"
-          onChange={handleImageChange}
+          accept="image/*"
+          onChange={
+            handleImageChange
+          }
         />
 
         {preview && (
@@ -411,80 +554,81 @@ const AddProduct = () => {
 
         <div className="space-y-4">
 
-          {variants.map((v, index) => (
+          {variants.map(
+            (v, index) => (
 
-            <div
-              key={index}
-              className="border rounded-xl p-4 bg-gray-50"
-            >
+              <div
+                key={index}
+                className="border rounded-xl p-4 bg-gray-50"
+              >
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-                {/* SIZE */}
-                <input
-                  type="text"
-                  placeholder="Size"
-                  value={v.size}
-                  onChange={(e) =>
-                    handleVariantChange(
-                      index,
-                      "size",
-                      e.target.value
-                    )
-                  }
-                  className="border p-2 rounded-lg"
-                />
+                  <input
+                    type="text"
+                    placeholder="Size"
+                    value={v.size}
+                    onChange={(e) =>
+                      handleVariantChange(
+                        index,
+                        "size",
+                        e.target.value
+                      )
+                    }
+                    className="border p-2 rounded-lg"
+                  />
 
-                {/* COLOR */}
-                <input
-                  type="text"
-                  placeholder="Màu"
-                  value={v.color}
-                  onChange={(e) =>
-                    handleVariantChange(
-                      index,
-                      "color",
-                      e.target.value
-                    )
-                  }
-                  className="border p-2 rounded-lg"
-                />
+                  <input
+                    type="text"
+                    placeholder="Màu"
+                    value={v.color}
+                    onChange={(e) =>
+                      handleVariantChange(
+                        index,
+                        "color",
+                        e.target.value
+                      )
+                    }
+                    className="border p-2 rounded-lg"
+                  />
 
-                {/* STOCK */}
-                <input
-                  type="number"
-                  placeholder="Số lượng"
-                  value={v.stock}
-                  onChange={(e) =>
-                    handleVariantChange(
-                      index,
-                      "stock",
-                      e.target.value
-                    )
-                  }
-                  className="border p-2 rounded-lg"
-                />
+                  <input
+                    type="number"
+                    placeholder="Số lượng"
+                    value={v.stock}
+                    onChange={(e) =>
+                      handleVariantChange(
+                        index,
+                        "stock",
+                        e.target.value
+                      )
+                    }
+                    className="border p-2 rounded-lg"
+                  />
+
+                </div>
+
+                {variants.length >
+                  1 && (
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      removeVariant(
+                        index
+                      )
+                    }
+                    className="mt-3 text-red-500 hover:text-red-700"
+                  >
+                    Xóa biến thể
+                  </button>
+
+                )}
 
               </div>
 
-              {/* REMOVE */}
-              {variants.length > 1 && (
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    removeVariant(index)
-                  }
-                  className="mt-3 text-red-500 hover:text-red-700"
-                >
-                  Xóa biến thể
-                </button>
-
-              )}
-
-            </div>
-
-          ))}
+            )
+          )}
 
         </div>
 
