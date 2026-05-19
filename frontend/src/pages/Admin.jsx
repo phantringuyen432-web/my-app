@@ -178,7 +178,7 @@ const Admin = () => {
         {/* SEARCH */}
         <input
           type="text"
-          placeholder="🔍 Tìm theo mã đơn..."
+          placeholder="Tìm theo mã đơn..."
           value={search}
           onChange={(e) =>
             setSearch(e.target.value)
