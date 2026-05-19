@@ -236,6 +236,7 @@ exports.login = async (req, res) => {
     }
 
     // tạo token
+    console.log("JWT_SECRET =", process.env.JWT_SECRET);
     const token = jwt.sign(
 
       {
