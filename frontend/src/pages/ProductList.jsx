@@ -24,13 +24,35 @@ const ProductList = () => {
       "https://my-app-ne36.onrender.com/api/product"
     )
       .then(res => res.json())
+
       .then(data => {
 
-        setProducts(data);
+        console.log(data);
+
+        // FIX PAGINATION RESPONSE
+        if (Array.isArray(data.products)) {
+
+          setProducts(data.products);
+
+        }
+
+        // fallback nếu backend cũ
+        else if (Array.isArray(data)) {
+
+          setProducts(data);
+
+        }
+
+        else {
+
+          setProducts([]);
+
+        }
 
         setLoading(false);
 
       })
+
       .catch(err => {
 
         console.log(err);
@@ -38,6 +60,8 @@ const ProductList = () => {
         toast.error(
           "Lỗi tải sản phẩm"
         );
+
+        setProducts([]);
 
         setLoading(false);
 
@@ -69,6 +93,7 @@ const ProductList = () => {
       }
     )
       .then(res => res.json())
+
       .then(() => {
 
         toast.success(
@@ -78,6 +103,7 @@ const ProductList = () => {
         fetchProducts();
 
       })
+
       .catch(err => {
 
         console.log(err);
@@ -96,7 +122,7 @@ const ProductList = () => {
   const filteredProducts =
     products.filter(product =>
       product.name
-        .toLowerCase()
+        ?.toLowerCase()
         .includes(
           search.toLowerCase()
         )
@@ -155,7 +181,7 @@ const ProductList = () => {
               e.target.value
             )
           }
-          className="w-full border p-4 rounded-xl"
+          className="w-full border p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
 
       </div>
@@ -165,7 +191,7 @@ const ProductList = () => {
 
         {filteredProducts.length === 0 ? (
 
-          <div className="p-10 text-center text-gray-500">
+          <div className="p-10 text-center text-gray-500 text-lg">
             Không tìm thấy sản phẩm
           </div>
 
