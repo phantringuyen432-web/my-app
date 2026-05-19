@@ -8,8 +8,12 @@ const ProductList = () => {
 
   const [loading, setLoading] = useState(true);
 
-  // SEARCH
   const [search, setSearch] = useState("");
+
+  // PAGINATION
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [totalPages, setTotalPages] = useState(1);
 
   const navigate = useNavigate();
 
@@ -21,7 +25,7 @@ const ProductList = () => {
     setLoading(true);
 
     fetch(
-      "https://my-app-ne36.onrender.com/api/product"
+      `https://my-app-ne36.onrender.com/api/product?page=${currentPage}&search=${search}`
     )
       .then(res => res.json())
 
@@ -29,25 +33,9 @@ const ProductList = () => {
 
         console.log(data);
 
-        // FIX PAGINATION RESPONSE
-        if (Array.isArray(data.products)) {
+        setProducts(data.products || []);
 
-          setProducts(data.products);
-
-        }
-
-        // fallback nếu backend cũ
-        else if (Array.isArray(data)) {
-
-          setProducts(data);
-
-        }
-
-        else {
-
-          setProducts([]);
-
-        }
+        setTotalPages(data.totalPages || 1);
 
         setLoading(false);
 
@@ -57,9 +45,7 @@ const ProductList = () => {
 
         console.log(err);
 
-        toast.error(
-          "Lỗi tải sản phẩm"
-        );
+        toast.error("Lỗi tải sản phẩm");
 
         setProducts([]);
 
@@ -73,7 +59,7 @@ const ProductList = () => {
 
     fetchProducts();
 
-  }, []);
+  }, [currentPage, search]);
 
   // =========================
   // DELETE PRODUCT
@@ -96,9 +82,7 @@ const ProductList = () => {
 
       .then(() => {
 
-        toast.success(
-          "Đã xóa sản phẩm"
-        );
+        toast.success("Đã xóa sản phẩm");
 
         fetchProducts();
 
@@ -108,25 +92,11 @@ const ProductList = () => {
 
         console.log(err);
 
-        toast.error(
-          "Xóa thất bại"
-        );
+        toast.error("Xóa thất bại");
 
       });
 
   };
-
-  // =========================
-  // FILTER PRODUCTS
-  // =========================
-  const filteredProducts =
-    products.filter(product =>
-      product.name
-        ?.toLowerCase()
-        .includes(
-          search.toLowerCase()
-        )
-    );
 
   // =========================
   // LOADING
@@ -158,9 +128,7 @@ const ProductList = () => {
 
         <button
           onClick={() =>
-            navigate(
-              "/admin/add-product"
-            )
+            navigate("/admin/add-product")
           }
           className="bg-green-500 hover:bg-green-600 text-white px-5 py-3 rounded-xl font-semibold transition"
         >
@@ -176,11 +144,13 @@ const ProductList = () => {
           type="text"
           placeholder="Tìm kiếm sản phẩm..."
           value={search}
-          onChange={(e) =>
-            setSearch(
-              e.target.value
-            )
-          }
+          onChange={(e) => {
+
+            setSearch(e.target.value);
+
+            setCurrentPage(1);
+
+          }}
           className="w-full border p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
 
@@ -189,7 +159,7 @@ const ProductList = () => {
       {/* PRODUCT LIST */}
       <div className="bg-white rounded-2xl shadow overflow-hidden">
 
-        {filteredProducts.length === 0 ? (
+        {products.length === 0 ? (
 
           <div className="p-10 text-center text-gray-500 text-lg">
             Không tìm thấy sản phẩm
@@ -197,7 +167,7 @@ const ProductList = () => {
 
         ) : (
 
-          filteredProducts.map(p => (
+          products.map(p => (
 
             <div
               key={p.id}
@@ -222,8 +192,7 @@ const ProductList = () => {
                   <p className="text-red-500 font-semibold text-lg">
                     {Number(
                       p.price
-                    ).toLocaleString()}{" "}
-                    VND
+                    ).toLocaleString()} VND
                   </p>
 
                 </div>
@@ -233,7 +202,6 @@ const ProductList = () => {
               {/* RIGHT */}
               <div className="flex gap-3">
 
-                {/* EDIT */}
                 <button
                   onClick={() =>
                     navigate(
@@ -245,12 +213,9 @@ const ProductList = () => {
                   Sửa
                 </button>
 
-                {/* DELETE */}
                 <button
                   onClick={() =>
-                    handleDelete(
-                      p.id
-                    )
+                    handleDelete(p.id)
                   }
                   className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl transition"
                 >
@@ -266,6 +231,49 @@ const ProductList = () => {
         )}
 
       </div>
+
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+
+        <div className="flex justify-center items-center gap-4 mt-8">
+
+          <button
+            disabled={currentPage === 1}
+            onClick={() =>
+              setCurrentPage(prev => prev - 1)
+            }
+            className={`px-5 py-2 rounded-xl font-semibold
+            ${
+              currentPage === 1
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-blue-500 hover:bg-blue-600 text-white"
+            }`}
+          >
+            ← Trước
+          </button>
+
+          <span className="font-bold">
+            Trang {currentPage} / {totalPages}
+          </span>
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() =>
+              setCurrentPage(prev => prev + 1)
+            }
+            className={`px-5 py-2 rounded-xl font-semibold
+            ${
+              currentPage === totalPages
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-blue-500 hover:bg-blue-600 text-white"
+            }`}
+          >
+            Tiếp →
+          </button>
+
+        </div>
+
+      )}
 
     </div>
 
