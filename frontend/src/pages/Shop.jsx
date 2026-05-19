@@ -3,66 +3,94 @@ import { useState, useEffect } from "react";
 
 const Shop = () => {
 
+  // =========================
+  // STATES
+  // =========================
   const [search, setSearch] = useState("");
 
   const [categories, setCategories] = useState([]);
 
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] =
+    useState(null);
 
   const [products, setProducts] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
   // pagination
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] =
+    useState(1);
 
   const productsPerPage = 6;
 
-  // fetch categories
+  // =========================
+  // USER
+  // =========================
+  const user = JSON.parse(
+    localStorage.getItem("user")
+  );
+
+  // =========================
+  // FETCH CATEGORIES
+  // =========================
   useEffect(() => {
 
-    fetch("https://my-app-ne36.onrender.com/api/category")
+    fetch(
+      "https://my-app-ne36.onrender.com/api/category"
+    )
       .then(res => res.json())
-      .then(data => setCategories(data));
+      .then(data => setCategories(data))
+      .catch(err => console.log(err));
 
   }, []);
 
-  // fetch products
+  // =========================
+  // FETCH PRODUCTS
+  // =========================
   useEffect(() => {
 
     let url =
       "https://my-app-ne36.onrender.com/api/product";
 
+    const queryParams = [];
+
+    // category
     if (selectedCategory) {
-      url += `?category=${selectedCategory}`;
+      queryParams.push(
+        `category=${selectedCategory}`
+      );
+    }
+
+    // search
+    if (search.trim()) {
+      queryParams.push(
+        `search=${encodeURIComponent(search)}`
+      );
+    }
+
+    // pagination backend
+    queryParams.push(`page=${currentPage}`);
+    queryParams.push(`limit=${productsPerPage}`);
+
+    // add query
+    if (queryParams.length > 0) {
+      url += `?${queryParams.join("&")}`;
     }
 
     setLoading(true);
 
     fetch(url)
-
       .then(res => res.json())
-
       .then(data => {
 
         console.log(data);
 
-        if (Array.isArray(data)) {
-
-          setProducts(data);
-
-        } else {
-
-          setProducts([]);
-
-        }
-
-        setCurrentPage(1);
+        // backend trả object
+        setProducts(data.products || []);
 
         setLoading(false);
 
       })
-
       .catch(err => {
 
         console.log(err);
@@ -73,12 +101,15 @@ const Shop = () => {
 
       });
 
-  }, [selectedCategory]);
+  }, [
+    selectedCategory,
+    search,
+    currentPage
+  ]);
 
-  const user = JSON.parse(
-    localStorage.getItem("user")
-  );
-
+  // =========================
+  // LOGOUT
+  // =========================
   const handleLogout = () => {
 
     localStorage.removeItem("user");
@@ -89,31 +120,30 @@ const Shop = () => {
 
   };
 
-  // SEARCH FILTER
-  const filteredProducts = products.filter((p) =>
-    p.name
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  // =========================
+  // RESET PAGE WHEN SEARCH
+  // =========================
+  useEffect(() => {
 
+    setCurrentPage(1);
+
+  }, [search, selectedCategory]);
+
+  // =========================
   // PAGINATION
+  // =========================
   const totalPages = Math.ceil(
-    filteredProducts.length / productsPerPage
+    products.length / productsPerPage
   );
 
-  const startIndex =
-    (currentPage - 1) * productsPerPage;
-
-  const currentProducts = filteredProducts.slice(
-    startIndex,
-    startIndex + productsPerPage
-  );
-
+  // =========================
+  // UI
+  // =========================
   return (
 
     <div className="min-h-screen flex flex-col bg-gray-100">
 
-      {/* HEADER */}
+      {/* ================= HEADER ================= */}
       <div className="w-full bg-gradient-to-r from-teal-400 to-blue-500 text-white py-4 shadow-md">
 
         <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
@@ -124,7 +154,7 @@ const Shop = () => {
           </h1>
 
           {/* MENU */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
 
             {user ? (
               <>
@@ -179,14 +209,17 @@ const Shop = () => {
 
       </div>
 
-      {/* CONTENT */}
+      {/* ================= CONTENT ================= */}
       <div className="flex-grow max-w-6xl mx-auto px-4 py-8 w-full">
 
         {/* CATEGORY */}
         <div className="flex flex-wrap gap-3 mb-8 justify-center">
 
+          {/* ALL */}
           <button
-            onClick={() => setSelectedCategory(null)}
+            onClick={() =>
+              setSelectedCategory(null)
+            }
             className={`px-5 py-2 rounded-full font-medium shadow-sm transition
               ${
                 selectedCategory === null
@@ -196,7 +229,10 @@ const Shop = () => {
           >
             Tất cả
           </button>
+
+          {/* CATEGORY BUTTON */}
           {categories.map(cat => (
+
             <button
               key={cat.id}
               onClick={() =>
@@ -211,12 +247,14 @@ const Shop = () => {
             >
               {cat.name}
             </button>
+
           ))}
 
         </div>
 
         {/* SEARCH */}
         <div className="mb-6">
+
           <input
             type="text"
             placeholder="Tìm sản phẩm..."
@@ -224,79 +262,105 @@ const Shop = () => {
             onChange={(e) =>
               setSearch(e.target.value)
             }
-            className="w-full border p-3 rounded-xl"
+            className="w-full border p-3 rounded-xl shadow-sm"
           />
+
         </div>
 
-        {/* LOADING */}
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, index) => (
-                <div
-                  key={index}
-                  className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse"
-                >
-                  {/* IMAGE */}
-                  <div className="h-56 bg-gray-300"></div>
-                  {/* INFO */}
-                  <div className="p-4">
-                    <div className="h-6 bg-gray-300 rounded mb-4"></div>
-                    <div className="h-6 w-1/2 bg-gray-300 rounded mb-6"></div>
-                    <div className="h-12 bg-gray-300 rounded-xl"></div>
-                  </div>
+        {/* ================= LOADING ================= */}
+        {loading ? (
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+
+            {[...Array(6)].map((_, index) => (
+
+              <div
+                key={index}
+                className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse"
+              >
+
+                <div className="h-56 bg-gray-300"></div>
+
+                <div className="p-4">
+
+                  <div className="h-6 bg-gray-300 rounded mb-4"></div>
+
+                  <div className="h-6 w-1/2 bg-gray-300 rounded mb-6"></div>
+
+                  <div className="h-12 bg-gray-300 rounded-xl"></div>
+
                 </div>
-              ))}
-            </div>
-          ) : (
+
+              </div>
+
+            ))}
+
+          </div>
+
+        ) : (
+
           <>
-            {/* PRODUCTS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {/* ================= PRODUCTS ================= */}
+            {products.length === 0 ? (
 
-              {currentProducts.map(p => (
+              <div className="text-center py-20 text-gray-500 text-xl">
+                Không tìm thấy sản phẩm
+              </div>
 
-                <div
-                  key={p.id}
-                  className="bg-white rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition duration-300 overflow-hidden flex flex-col"
-                >
+            ) : (
 
-                  {/* IMAGE */}
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    className="h-56 w-full object-cover"
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
-                  {/* INFO */}
-                  <div className="p-4 flex flex-col flex-grow">
+                {products.map(p => (
 
-                    <h2 className="font-semibold text-lg line-clamp-2 min-h-[56px]">
-                      {p.name}
-                    </h2>
+                  <div
+                    key={p.id}
+                    className="bg-white rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition duration-300 overflow-hidden flex flex-col"
+                  >
 
-                    <p className="text-red-500 font-bold text-xl mt-3">
-                      {Number(p.price).toLocaleString()} VND
-                    </p>
+                    {/* IMAGE */}
+                    <img
+                      src={p.image}
+                      alt={p.name}
+                      className="h-56 w-full object-cover"
+                    />
 
-                    {/* BUTTON */}
-                    <Link
-                      to={`/product/${p.id}`}
-                      className="mt-auto block text-center bg-blue-500 hover:bg-blue-700 text-white py-3 rounded-xl transition duration-200 font-semibold"
-                    >
-                      Xem chi tiết
-                    </Link>
+                    {/* INFO */}
+                    <div className="p-4 flex flex-col flex-grow">
+
+                      <h2 className="font-semibold text-lg line-clamp-2 min-h-[56px]">
+                        {p.name}
+                      </h2>
+
+                      <p className="text-red-500 font-bold text-xl mt-3">
+                        {Number(
+                          p.price
+                        ).toLocaleString()}{" "}
+                        VND
+                      </p>
+
+                      {/* BUTTON */}
+                      <Link
+                        to={`/product/${p.id}`}
+                        className="mt-auto block text-center bg-blue-500 hover:bg-blue-700 text-white py-3 rounded-xl transition duration-200 font-semibold"
+                      >
+                        Xem chi tiết
+                      </Link>
+
+                    </div>
 
                   </div>
 
-                </div>
+                ))}
 
-              ))}
+              </div>
 
-            </div>
+            )}
 
-            {/* PAGINATION */}
-            {totalPages > 1 && (
+            {/* ================= PAGINATION ================= */}
+            {products.length > 0 && (
 
-              <div className="flex justify-center items-center gap-4 mt-10">
+              <div className="flex justify-center items-center gap-4 mt-10 flex-wrap">
 
                 {/* PREV */}
                 <button
@@ -316,21 +380,15 @@ const Shop = () => {
 
                 {/* PAGE */}
                 <span className="font-semibold text-lg">
-                  Trang {currentPage} / {totalPages}
+                  Trang {currentPage}
                 </span>
 
                 {/* NEXT */}
                 <button
-                  disabled={currentPage === totalPages}
                   onClick={() =>
                     setCurrentPage(prev => prev + 1)
                   }
-                  className={`px-5 py-2 rounded-xl font-semibold transition
-                    ${
-                      currentPage === totalPages
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-blue-500 hover:bg-blue-600 text-white"
-                    }`}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-xl font-semibold transition"
                 >
                   Tiếp →
                 </button>
@@ -338,17 +396,19 @@ const Shop = () => {
               </div>
 
             )}
+
           </>
 
         )}
 
       </div>
 
-      {/* FOOTER */}
+      {/* ================= FOOTER ================= */}
       <footer className="bg-gray-900 text-gray-300 mt-10">
 
         <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-8">
 
+          {/* SHOP */}
           <div>
 
             <h2 className="text-2xl font-bold text-white mb-4">
@@ -363,6 +423,7 @@ const Shop = () => {
 
           </div>
 
+          {/* LINKS */}
           <div>
 
             <h3 className="text-xl font-semibold text-white mb-4">
@@ -402,6 +463,7 @@ const Shop = () => {
 
           </div>
 
+          {/* CONTACT */}
           <div>
 
             <h3 className="text-xl font-semibold text-white mb-4">

@@ -7,39 +7,72 @@ exports.getProducts = async (req, res) => {
 
   try {
 
-    const { category } = req.query;
+    // QUERY
+    const page =
+      parseInt(req.query.page) || 1;
 
-    let sql = `
-      SELECT 
-        p.*,
-        c.name AS category_name
-      FROM products p
-      LEFT JOIN categories c
-      ON p.category_id = c.id
-    `;
+    const limit =
+      parseInt(req.query.limit) || 8;
 
-    let params = [];
+    const search =
+      req.query.search || "";
 
-    // filter category
-    if (category) {
+    const offset =
+      (page - 1) * limit;
 
-      sql += ` WHERE p.category_id = $1`;
+    // GET PRODUCTS
+    const result = await db.query(
+      `
+      SELECT *
+      FROM products
+      WHERE name ILIKE $1
+      ORDER BY id DESC
+      LIMIT $2 OFFSET $3
+      `,
+      [
+        `%${search}%`,
+        limit,
+        offset
+      ]
+    );
 
-      params.push(category);
+    // TOTAL PRODUCTS
+    const totalResult = await db.query(
+      `
+      SELECT COUNT(*) 
+      FROM products
+      WHERE name ILIKE $1
+      `,
+      [`%${search}%`]
+    );
 
-    }
+    const total =
+      parseInt(
+        totalResult.rows[0].count
+      );
 
-    const result = await db.query(sql, params);
+    // =========================
+    // RESPONSE
+    // =========================
+    res.json({
 
-    res.json(result.rows);
+      products: result.rows,
+
+      total,
+
+      currentPage: page,
+
+      totalPages: Math.ceil(
+        total / limit
+      )
+
+    });
 
   } catch (err) {
 
     console.log(err);
 
-    res.status(500).json({
-      message: "Server error"
-    });
+    res.status(500).json(err);
 
   }
 
