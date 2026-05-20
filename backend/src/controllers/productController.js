@@ -16,48 +16,118 @@ exports.getProducts = async (req, res) => {
     const search =
       req.query.search || "";
 
+    const category =
+      req.query.category || null;
+
     const offset =
       (page - 1) * limit;
 
-    // GET PRODUCTS
-    const result = await db.query(
-      `
+    // =========================
+    // QUERY
+    // =========================
+    let query = `
       SELECT *
       FROM products
       WHERE name ILIKE $1
+    `;
+
+    const values = [
+      `%${search}%`
+    ];
+
+    // category filter
+    if (category) {
+
+      query += `
+        AND category_id = $2
+      `;
+
+      values.push(category);
+
+    }
+
+    query += `
       ORDER BY id DESC
-      LIMIT $2 OFFSET $3
-      `,
-      [
-        `%${search}%`,
-        limit,
-        offset
-      ]
-    );
+    `;
 
-    // parse images
-    const products = result.rows.map(p => ({
-      ...p,
-      images: p.images
-        ? JSON.parse(p.images)
-        : []
-    }));
+    // pagination
+    if (category) {
 
-    // TOTAL PRODUCTS
-    const totalResult = await db.query(
-      `
+      query += `
+        LIMIT $3 OFFSET $4
+      `;
+
+      values.push(limit);
+      values.push(offset);
+
+    } else {
+
+      query += `
+        LIMIT $2 OFFSET $3
+      `;
+
+      values.push(limit);
+      values.push(offset);
+
+    }
+
+    // =========================
+    // GET PRODUCTS
+    // =========================
+    const result =
+      await db.query(
+        query,
+        values
+      );
+
+    // normalize images
+    const products =
+      result.rows.map(p => ({
+
+        ...p,
+
+        images:
+          p.images || []
+
+      }));
+
+    // =========================
+    // TOTAL
+    // =========================
+    let totalQuery = `
       SELECT COUNT(*)
       FROM products
       WHERE name ILIKE $1
-      `,
-      [`%${search}%`]
-    );
+    `;
+
+    const totalValues = [
+      `%${search}%`
+    ];
+
+    if (category) {
+
+      totalQuery += `
+        AND category_id = $2
+      `;
+
+      totalValues.push(category);
+
+    }
+
+    const totalResult =
+      await db.query(
+        totalQuery,
+        totalValues
+      );
 
     const total =
       parseInt(
         totalResult.rows[0].count
       );
 
+    // =========================
+    // RESPONSE
+    // =========================
     res.json({
 
       products,
@@ -74,7 +144,10 @@ exports.getProducts = async (req, res) => {
 
   } catch (err) {
 
-    console.log(err);
+    console.log(
+      "GET PRODUCTS ERROR:",
+      err
+    );
 
     res.status(500).json({
       message: "Lỗi server"
@@ -91,6 +164,9 @@ exports.addProduct = async (req, res) => {
 
   try {
 
+    // =========================
+    // VALIDATE IMAGES
+    // =========================
     if (
       !req.files ||
       req.files.length === 0
@@ -110,42 +186,58 @@ exports.addProduct = async (req, res) => {
       variants
     } = req.body;
 
-    // multiple images
-    const images = req.files.map(
-      file => file.path
-    );
+    // =========================
+    // MULTIPLE IMAGES
+    // =========================
+    const images =
+      req.files.map(
+        file => file.path
+      );
 
-    // insert product
-    const productResult = await db.query(
-      `
-      INSERT INTO products
-      (
-        name,
-        price,
-        images,
-        category_id,
-        description
-      )
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id
-      `,
-      [
-        name,
-        price,
-        JSON.stringify(images),
-        category_id,
-        description
-      ]
-    );
+    // =========================
+    // INSERT PRODUCT
+    // =========================
+    const productResult =
+      await db.query(
+        `
+        INSERT INTO products
+        (
+          name,
+          price,
+          images,
+          category_id,
+          description
+        )
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+        `,
+        [
+          name,
+          price,
+          images,
+          category_id,
+          description
+        ]
+      );
 
     const productId =
       productResult.rows[0].id;
 
-    // parse variants
-    const parsedVariants =
-      JSON.parse(variants);
+    // =========================
+    // PARSE VARIANTS
+    // =========================
+    let parsedVariants = [];
 
-    // insert variants
+    if (variants) {
+
+      parsedVariants =
+        JSON.parse(variants);
+
+    }
+
+    // =========================
+    // INSERT VARIANTS
+    // =========================
     for (const v of parsedVariants) {
 
       await db.query(
@@ -176,7 +268,10 @@ exports.addProduct = async (req, res) => {
 
   } catch (err) {
 
-    console.log(err);
+    console.log(
+      "ADD PRODUCT ERROR:",
+      err
+    );
 
     res.status(500).json({
       message: "Lỗi server"
@@ -193,7 +288,8 @@ exports.deleteProduct = async (req, res) => {
 
   try {
 
-    const id = req.params.id;
+    const id =
+      req.params.id;
 
     // delete variants
     await db.query(
@@ -214,12 +310,16 @@ exports.deleteProduct = async (req, res) => {
     );
 
     res.json({
-      message: "Đã xóa sản phẩm"
+      message:
+        "Đã xóa sản phẩm"
     });
 
   } catch (err) {
 
-    console.log(err);
+    console.log(
+      "DELETE PRODUCT ERROR:",
+      err
+    );
 
     res.status(500).json({
       message: "Lỗi server"
@@ -236,7 +336,8 @@ exports.updateProduct = async (req, res) => {
 
   try {
 
-    const id = req.params.id;
+    const id =
+      req.params.id;
 
     const {
       name,
@@ -248,19 +349,24 @@ exports.updateProduct = async (req, res) => {
 
     let images = null;
 
-    // upload new images
+    // =========================
+    // NEW IMAGES
+    // =========================
     if (
       req.files &&
       req.files.length > 0
     ) {
 
-      images = req.files.map(
-        file => file.path
-      );
+      images =
+        req.files.map(
+          file => file.path
+        );
 
     }
 
-    // update product
+    // =========================
+    // UPDATE PRODUCT
+    // =========================
     if (images) {
 
       await db.query(
@@ -279,7 +385,7 @@ exports.updateProduct = async (req, res) => {
           price,
           category_id,
           description,
-          JSON.stringify(images),
+          images,
           id
         ]
       );
@@ -307,7 +413,9 @@ exports.updateProduct = async (req, res) => {
 
     }
 
-    // delete old variants
+    // =========================
+    // DELETE OLD VARIANTS
+    // =========================
     await db.query(
       `
       DELETE FROM product_variants
@@ -316,7 +424,9 @@ exports.updateProduct = async (req, res) => {
       [id]
     );
 
-    // parse variants
+    // =========================
+    // PARSE VARIANTS
+    // =========================
     let parsedVariants = [];
 
     if (variants) {
@@ -326,7 +436,9 @@ exports.updateProduct = async (req, res) => {
 
     }
 
-    // insert new variants
+    // =========================
+    // INSERT NEW VARIANTS
+    // =========================
     for (const v of parsedVariants) {
 
       await db.query(
@@ -357,7 +469,10 @@ exports.updateProduct = async (req, res) => {
 
   } catch (err) {
 
-    console.log(err);
+    console.log(
+      "UPDATE PRODUCT ERROR:",
+      err
+    );
 
     res.status(500).json({
       message: err.message
@@ -377,7 +492,9 @@ exports.getProductDetail = async (req, res) => {
     const productId =
       req.params.id;
 
-    // get product
+    // =========================
+    // GET PRODUCT
+    // =========================
     const productResult =
       await db.query(
         `
@@ -402,23 +519,27 @@ exports.getProductDetail = async (req, res) => {
     const product =
       productResult.rows[0];
 
-    // parse images
+    // normalize images
     product.images =
-      product.images
-        ? JSON.parse(product.images)
-        : [];
+      product.images || [];
 
-    // get variants
+    // =========================
+    // GET VARIANTS
+    // =========================
     const variantResult =
       await db.query(
         `
         SELECT *
         FROM product_variants
         WHERE product_id = $1
+        ORDER BY id ASC
         `,
         [productId]
       );
 
+    // =========================
+    // RESPONSE
+    // =========================
     res.json({
 
       product,
@@ -430,7 +551,10 @@ exports.getProductDetail = async (req, res) => {
 
   } catch (err) {
 
-    console.log(err);
+    console.log(
+      "GET PRODUCT DETAIL ERROR:",
+      err
+    );
 
     res.status(500).json({
       message: "Lỗi server"
