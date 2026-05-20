@@ -7,7 +7,6 @@ exports.getProducts = async (req, res) => {
 
   try {
 
-    // QUERY
     const page =
       parseInt(req.query.page) || 1;
 
@@ -36,10 +35,18 @@ exports.getProducts = async (req, res) => {
       ]
     );
 
+    // parse images
+    const products = result.rows.map(p => ({
+      ...p,
+      images: p.images
+        ? JSON.parse(p.images)
+        : []
+    }));
+
     // TOTAL PRODUCTS
     const totalResult = await db.query(
       `
-      SELECT COUNT(*) 
+      SELECT COUNT(*)
       FROM products
       WHERE name ILIKE $1
       `,
@@ -51,12 +58,9 @@ exports.getProducts = async (req, res) => {
         totalResult.rows[0].count
       );
 
-    // =========================
-    // RESPONSE
-    // =========================
     res.json({
 
-      products: result.rows,
+      products,
 
       total,
 
@@ -72,7 +76,9 @@ exports.getProducts = async (req, res) => {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 
@@ -85,7 +91,10 @@ exports.addProduct = async (req, res) => {
 
   try {
 
-    if (!req.file) {
+    if (
+      !req.files ||
+      req.files.length === 0
+    ) {
 
       return res.status(400).json({
         message: "Chưa upload ảnh"
@@ -101,29 +110,40 @@ exports.addProduct = async (req, res) => {
       variants
     } = req.body;
 
-    const image = req.file.path;
+    // multiple images
+    const images = req.files.map(
+      file => file.path
+    );
 
     // insert product
     const productResult = await db.query(
       `
       INSERT INTO products
-      (name, price, image, category_id, description)
+      (
+        name,
+        price,
+        images,
+        category_id,
+        description
+      )
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id
       `,
       [
         name,
         price,
-        image,
+        JSON.stringify(images),
         category_id,
         description
       ]
     );
 
-    const productId = productResult.rows[0].id;
+    const productId =
+      productResult.rows[0].id;
 
     // parse variants
-    const parsedVariants = JSON.parse(variants);
+    const parsedVariants =
+      JSON.parse(variants);
 
     // insert variants
     for (const v of parsedVariants) {
@@ -131,7 +151,12 @@ exports.addProduct = async (req, res) => {
       await db.query(
         `
         INSERT INTO product_variants
-        (product_id, size, color, stock)
+        (
+          product_id,
+          size,
+          color,
+          stock
+        )
         VALUES ($1, $2, $3, $4)
         `,
         [
@@ -145,7 +170,8 @@ exports.addProduct = async (req, res) => {
     }
 
     res.json({
-      message: "Thêm sản phẩm thành công"
+      message:
+        "Thêm sản phẩm thành công"
     });
 
   } catch (err) {
@@ -195,37 +221,9 @@ exports.deleteProduct = async (req, res) => {
 
     console.log(err);
 
-    res.status(500).json(err);
-
-  }
-
-};
-
-// ============================
-// GET PRODUCT BY ID
-// ============================
-exports.getProductById = async (req, res) => {
-
-  try {
-
-    const id = req.params.id;
-
-    const result = await db.query(
-      `
-      SELECT *
-      FROM products
-      WHERE id = $1
-      `,
-      [id]
-    );
-
-    res.json(result.rows[0]);
-
-  } catch (err) {
-
-    console.log(err);
-
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 
@@ -238,9 +236,6 @@ exports.updateProduct = async (req, res) => {
 
   try {
 
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file);
-
     const id = req.params.id;
 
     const {
@@ -251,14 +246,22 @@ exports.updateProduct = async (req, res) => {
       variants
     } = req.body;
 
-    let image = null;
+    let images = null;
 
-    if (req.file) {
-      image = req.file.path;
+    // upload new images
+    if (
+      req.files &&
+      req.files.length > 0
+    ) {
+
+      images = req.files.map(
+        file => file.path
+      );
+
     }
 
-    // UPDATE PRODUCT
-    if (image) {
+    // update product
+    if (images) {
 
       await db.query(
         `
@@ -268,7 +271,7 @@ exports.updateProduct = async (req, res) => {
           price = $2,
           category_id = $3,
           description = $4,
-          image = $5
+          images = $5
         WHERE id = $6
         `,
         [
@@ -276,7 +279,7 @@ exports.updateProduct = async (req, res) => {
           price,
           category_id,
           description,
-          image,
+          JSON.stringify(images),
           id
         ]
       );
@@ -304,7 +307,7 @@ exports.updateProduct = async (req, res) => {
 
     }
 
-    // DELETE OLD VARIANTS
+    // delete old variants
     await db.query(
       `
       DELETE FROM product_variants
@@ -313,22 +316,28 @@ exports.updateProduct = async (req, res) => {
       [id]
     );
 
-    // PARSE VARIANTS
+    // parse variants
     let parsedVariants = [];
 
     if (variants) {
 
-      parsedVariants = JSON.parse(variants);
+      parsedVariants =
+        JSON.parse(variants);
 
     }
 
-    // INSERT NEW VARIANTS
+    // insert new variants
     for (const v of parsedVariants) {
 
       await db.query(
         `
         INSERT INTO product_variants
-        (product_id, size, color, stock)
+        (
+          product_id,
+          size,
+          color,
+          stock
+        )
         VALUES ($1, $2, $3, $4)
         `,
         [
@@ -342,12 +351,13 @@ exports.updateProduct = async (req, res) => {
     }
 
     res.json({
-      message: "Cập nhật thành công"
+      message:
+        "Cập nhật thành công"
     });
 
   } catch (err) {
 
-    console.log("UPDATE ERROR:", err);
+    console.log(err);
 
     res.status(500).json({
       message: err.message
@@ -364,46 +374,67 @@ exports.getProductDetail = async (req, res) => {
 
   try {
 
-    const productId = req.params.id;
+    const productId =
+      req.params.id;
 
     // get product
-    const productResult = await db.query(
-      `
-      SELECT *
-      FROM products
-      WHERE id = $1
-      `,
-      [productId]
-    );
+    const productResult =
+      await db.query(
+        `
+        SELECT *
+        FROM products
+        WHERE id = $1
+        `,
+        [productId]
+      );
 
-    if (productResult.rows.length === 0) {
+    if (
+      productResult.rows.length === 0
+    ) {
 
       return res.status(404).json({
-        message: "Không tìm thấy sản phẩm"
+        message:
+          "Không tìm thấy sản phẩm"
       });
 
     }
 
+    const product =
+      productResult.rows[0];
+
+    // parse images
+    product.images =
+      product.images
+        ? JSON.parse(product.images)
+        : [];
+
     // get variants
-    const variantResult = await db.query(
-      `
-      SELECT *
-      FROM product_variants
-      WHERE product_id = $1
-      `,
-      [productId]
-    );
+    const variantResult =
+      await db.query(
+        `
+        SELECT *
+        FROM product_variants
+        WHERE product_id = $1
+        `,
+        [productId]
+      );
 
     res.json({
-      product: productResult.rows[0],
-      variants: variantResult.rows
+
+      product,
+
+      variants:
+        variantResult.rows
+
     });
 
   } catch (err) {
 
     console.log(err);
 
-    res.status(500).json(err);
+    res.status(500).json({
+      message: "Lỗi server"
+    });
 
   }
 

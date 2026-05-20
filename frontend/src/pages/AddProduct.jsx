@@ -30,12 +30,11 @@ const AddProduct = () => {
   ]);
 
   // =========================
-  // IMAGE
+  // IMAGES
   // =========================
-  const [image, setImage] = useState(null);
+  const [images, setImages] = useState([]);
 
-  const [preview, setPreview] =
-    useState(null);
+  const [previews, setPreviews] = useState([]);
 
   // =========================
   // CATEGORIES
@@ -86,46 +85,97 @@ const AddProduct = () => {
   }, []);
 
   // =========================
+  // CLEANUP PREVIEW MEMORY
+  // =========================
+  useEffect(() => {
+
+    return () => {
+
+      previews.forEach(url =>
+        URL.revokeObjectURL(url)
+      );
+
+    };
+
+  }, [previews]);
+
+  // =========================
   // HANDLE IMAGE
   // =========================
   const handleImageChange = (e) => {
 
-    const file = e.target.files[0];
+    const files = Array.from(
+      e.target.files
+    );
 
-    if (!file) return;
+    if (files.length === 0) return;
 
-    // check image type
-    if (
-      !file.type.startsWith("image/")
-    ) {
+    // validate
+    for (let file of files) {
 
-      toast.warning(
-        "Vui lòng chọn file ảnh"
-      );
+      if (
+        !file.type.startsWith(
+          "image/"
+        )
+      ) {
 
-      return;
+        toast.warning(
+          "Vui lòng chọn file ảnh"
+        );
+
+        return;
+
+      }
+
+      if (
+        file.size >
+        5 * 1024 * 1024
+      ) {
+
+        toast.warning(
+          "Mỗi ảnh tối đa 5MB"
+        );
+
+        return;
+
+      }
 
     }
 
-    // check size
-    if (
-      file.size >
-      5 * 1024 * 1024
-    ) {
-
-      toast.warning(
-        "Ảnh tối đa 5MB"
-      );
-
-      return;
-
-    }
-
-    setImage(file);
-
-    setPreview(
+    const previewUrls = files.map(file =>
       URL.createObjectURL(file)
     );
+
+    setImages(prev => [
+      ...prev,
+      ...files
+    ]);
+
+    setPreviews(prev => [
+      ...prev,
+      ...previewUrls
+    ]);
+
+  };
+
+  // =========================
+  // REMOVE IMAGE
+  // =========================
+  const removeImage = (index) => {
+
+    const updatedImages =
+      images.filter(
+        (_, i) => i !== index
+      );
+
+    const updatedPreviews =
+      previews.filter(
+        (_, i) => i !== index
+      );
+
+    setImages(updatedImages);
+
+    setPreviews(updatedPreviews);
 
   };
 
@@ -196,9 +246,9 @@ const AddProduct = () => {
       }
     ]);
 
-    setImage(null);
+    setImages([]);
 
-    setPreview(null);
+    setPreviews([]);
 
     const fileInput =
       document.getElementById(
@@ -224,7 +274,7 @@ const AddProduct = () => {
       !form.price ||
       !form.category_id ||
       !form.description.trim() ||
-      !image
+      images.length === 0
     ) {
 
       toast.warning(
@@ -254,7 +304,7 @@ const AddProduct = () => {
       if (
         !v.size.trim() ||
         !v.color.trim() ||
-        !v.stock
+        v.stock === ""
       ) {
 
         toast.warning(
@@ -306,11 +356,17 @@ const AddProduct = () => {
         form.category_id
       );
 
-      formData.append(
-        "image",
-        image
-      );
+      // multiple images
+      images.forEach((img) => {
 
+        formData.append(
+          "images",
+          img
+        );
+
+      });
+
+      // variants
       formData.append(
         "variants",
         JSON.stringify(variants)
@@ -322,7 +378,8 @@ const AddProduct = () => {
           method: "POST",
 
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization:
+              `Bearer ${token}`
           },
 
           body: formData
@@ -394,7 +451,7 @@ const AddProduct = () => {
 
   return (
 
-    <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow">
+    <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow">
 
       {/* TITLE */}
       <h1 className="text-3xl font-bold mb-6">
@@ -458,7 +515,8 @@ const AddProduct = () => {
           onChange={(e) =>
             setForm({
               ...form,
-              description: e.target.value
+              description:
+                e.target.value
             })
           }
           className="w-full border p-3 rounded-lg"
@@ -515,19 +573,49 @@ const AddProduct = () => {
         <input
           id="fileInput"
           type="file"
+          multiple
           accept="image/*"
           onChange={
             handleImageChange
           }
+          className="w-full border p-3 rounded-lg"
         />
 
-        {preview && (
+        {/* PREVIEW */}
+        {previews.length > 0 && (
 
-          <img
-            src={preview}
-            alt="preview"
-            className="mt-4 w-48 h-48 object-cover rounded-xl border"
-          />
+          <div className="flex flex-wrap gap-4 mt-4">
+
+            {previews.map(
+              (img, index) => (
+
+                <div
+                  key={index}
+                  className="relative"
+                >
+
+                  <img
+                    src={img}
+                    alt={`preview-${index}`}
+                    className="w-40 h-40 object-cover rounded-xl border shadow"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      removeImage(index)
+                    }
+                    className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white w-7 h-7 rounded-full"
+                  >
+                    ×
+                  </button>
+
+                </div>
+
+              )
+            )}
+
+          </div>
 
         )}
 
@@ -575,7 +663,7 @@ const AddProduct = () => {
                         e.target.value
                       )
                     }
-                    className="border p-2 rounded-lg"
+                    className="border p-3 rounded-lg"
                   />
 
                   <input
@@ -589,7 +677,7 @@ const AddProduct = () => {
                         e.target.value
                       )
                     }
-                    className="border p-2 rounded-lg"
+                    className="border p-3 rounded-lg"
                   />
 
                   <input
@@ -603,20 +691,17 @@ const AddProduct = () => {
                         e.target.value
                       )
                     }
-                    className="border p-2 rounded-lg"
+                    className="border p-3 rounded-lg"
                   />
 
                 </div>
 
-                {variants.length >
-                  1 && (
+                {variants.length > 1 && (
 
                   <button
                     type="button"
                     onClick={() =>
-                      removeVariant(
-                        index
-                      )
+                      removeVariant(index)
                     }
                     className="mt-3 text-red-500 hover:text-red-700"
                   >
@@ -638,12 +723,12 @@ const AddProduct = () => {
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className={`w-full py-3 rounded-xl text-lg font-semibold transition
-          ${
-            loading
-              ? "bg-gray-400 cursor-not-allowed text-white"
-              : "bg-green-500 hover:bg-green-600 text-white"
-          }`}
+        className={`w-full py-4 rounded-xl text-lg font-semibold transition
+        ${
+          loading
+            ? "bg-gray-400 cursor-not-allowed text-white"
+            : "bg-green-500 hover:bg-green-600 text-white"
+        }`}
       >
 
         {loading

@@ -38,7 +38,7 @@ router.post(
   "/add",
   verifyToken,
   isAdmin,
-  upload.single("image"),
+  upload.array("images", 10),
   addProduct
 );
 
@@ -55,7 +55,7 @@ router.put(
   "/:id",
   verifyToken,
   isAdmin,
-  upload.single("image"),
+  upload.array("images", 10),
   updateProduct
 );
 
