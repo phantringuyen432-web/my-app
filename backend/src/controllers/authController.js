@@ -284,3 +284,33 @@ exports.login = async (req, res) => {
   }
 
 };
+// ============================
+// GET ALL USERS
+// ============================
+exports.getUsers = async (req, res) => {
+
+  try {
+
+    const result = await db.query(`
+      SELECT
+        id,
+        username,
+        email,
+        role
+      FROM users
+      ORDER BY id DESC
+    `);
+
+    res.json(result.rows);
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: "Lỗi server"
+    });
+
+  }
+
+};
