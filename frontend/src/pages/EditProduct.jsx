@@ -8,7 +8,9 @@ const EditProduct = () => {
 
   const navigate = useNavigate();
 
+  // =========================
   // TOKEN
+  // =========================
   const token = localStorage.getItem("token");
 
   // =========================
@@ -23,9 +25,11 @@ const EditProduct = () => {
 
   const [variants, setVariants] = useState([]);
 
-  const [image, setImage] = useState(null);
+  // MULTIPLE IMAGES
+  const [images, setImages] = useState([]);
 
-  const [preview, setPreview] = useState(null);
+  // PREVIEW
+  const [previews, setPreviews] = useState([]);
 
   const [categories, setCategories] = useState([]);
 
@@ -45,7 +49,9 @@ const EditProduct = () => {
       .then(data => {
 
         if (Array.isArray(data)) {
+
           setCategories(data);
+
         }
 
       })
@@ -93,7 +99,8 @@ const EditProduct = () => {
 
         setVariants(data.variants || []);
 
-        setPreview(product.image);
+        // PREVIEW OLD IMAGES
+        setPreviews(product.images || []);
 
         setLoading(false);
 
@@ -111,37 +118,47 @@ const EditProduct = () => {
   }, [id, navigate]);
 
   // =========================
-  // CLEANUP PREVIEW
-  // =========================
-  useEffect(() => {
-
-    return () => {
-
-      if (
-        preview &&
-        preview.startsWith("blob:")
-      ) {
-        URL.revokeObjectURL(preview);
-      }
-
-    };
-
-  }, [preview]);
-
-  // =========================
-  // IMAGE
+  // HANDLE IMAGE
   // =========================
   const handleImageChange = (e) => {
 
-    const file = e.target.files[0];
+    const files = Array.from(e.target.files);
 
-    if (!file) return;
+    if (files.length === 0) return;
 
-    setImage(file);
+    // validate
+    for (let file of files) {
 
-    setPreview(
+      if (!file.type.startsWith("image/")) {
+
+        toast.warning(
+          "Vui lòng chọn file ảnh"
+        );
+
+        return;
+
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+
+        toast.warning(
+          "Mỗi ảnh tối đa 5MB"
+        );
+
+        return;
+
+      }
+
+    }
+
+    setImages(files);
+
+    // preview new images
+    const previewUrls = files.map(file =>
       URL.createObjectURL(file)
     );
+
+    setPreviews(previewUrls);
 
   };
 
@@ -218,7 +235,7 @@ const EditProduct = () => {
 
     }
 
-    // validate giá
+    // validate price
     if (Number(form.price) <= 0) {
 
       toast.warning(
@@ -289,15 +306,15 @@ const EditProduct = () => {
         JSON.stringify(variants)
       );
 
-      // image mới
-      if (image) {
+      // MULTIPLE IMAGES
+      images.forEach((img) => {
 
         formData.append(
-          "image",
-          image
+          "images",
+          img
         );
 
-      }
+      });
 
       const res = await fetch(
         `https://my-app-ne36.onrender.com/api/product/${id}`,
@@ -374,6 +391,7 @@ const EditProduct = () => {
 
     <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow">
 
+      {/* TITLE */}
       <h1 className="text-3xl font-bold mb-8">
         ✏️ Sửa sản phẩm
       </h1>
@@ -482,21 +500,34 @@ const EditProduct = () => {
       <div className="mb-8">
 
         <label className="block mb-2 font-semibold">
-          Ảnh sản phẩm
+          Hình ảnh sản phẩm
         </label>
 
         <input
           type="file"
+          multiple
+          accept="image/*"
           onChange={handleImageChange}
+          className="w-full border p-3 rounded-xl"
         />
 
-        {preview && (
+        {/* PREVIEW */}
+        {previews.length > 0 && (
 
-          <img
-            src={preview}
-            alt="preview"
-            className="w-52 h-52 object-cover rounded-2xl mt-5 border shadow"
-          />
+          <div className="flex flex-wrap gap-4 mt-5">
+
+            {previews.map((img, index) => (
+
+              <img
+                key={index}
+                src={img}
+                alt={`preview-${index}`}
+                className="w-40 h-40 object-cover rounded-2xl border shadow"
+              />
+
+            ))}
+
+          </div>
 
         )}
 

@@ -8,17 +8,25 @@ const Shop = () => {
   // =========================
   const [search, setSearch] = useState("");
 
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] =
+    useState([]);
 
-  const [selectedCategory, setSelectedCategory] =
-    useState(null);
+  const [
+    selectedCategory,
+    setSelectedCategory
+  ] = useState(null);
 
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] =
+    useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  // pagination
+  // PAGINATION
   const [currentPage, setCurrentPage] =
+    useState(1);
+
+  const [totalPages, setTotalPages] =
     useState(1);
 
   const productsPerPage = 6;
@@ -39,8 +47,18 @@ const Shop = () => {
       "https://my-app-ne36.onrender.com/api/category"
     )
       .then(res => res.json())
-      .then(data => setCategories(data))
-      .catch(err => console.log(err));
+
+      .then(data => {
+
+        setCategories(data || []);
+
+      })
+
+      .catch(err => {
+
+        console.log(err);
+
+      });
 
   }, []);
 
@@ -54,43 +72,63 @@ const Shop = () => {
 
     const queryParams = [];
 
-    // category
+    // CATEGORY
     if (selectedCategory) {
+
       queryParams.push(
         `category=${selectedCategory}`
       );
+
     }
 
-    // search
+    // SEARCH
     if (search.trim()) {
+
       queryParams.push(
-        `search=${encodeURIComponent(search)}`
+        `search=${encodeURIComponent(
+          search
+        )}`
       );
+
     }
 
-    // pagination backend
-    queryParams.push(`page=${currentPage}`);
-    queryParams.push(`limit=${productsPerPage}`);
+    // PAGINATION
+    queryParams.push(
+      `page=${currentPage}`
+    );
 
-    // add query
+    queryParams.push(
+      `limit=${productsPerPage}`
+    );
+
+    // BUILD URL
     if (queryParams.length > 0) {
+
       url += `?${queryParams.join("&")}`;
+
     }
 
     setLoading(true);
 
     fetch(url)
       .then(res => res.json())
+
       .then(data => {
 
         console.log(data);
 
-        // backend trả object
-        setProducts(data.products || []);
+        setProducts(
+          data.products || []
+        );
+
+        setTotalPages(
+          data.totalPages || 1
+        );
 
         setLoading(false);
 
       })
+
       .catch(err => {
 
         console.log(err);
@@ -108,6 +146,18 @@ const Shop = () => {
   ]);
 
   // =========================
+  // RESET PAGE
+  // =========================
+  useEffect(() => {
+
+    setCurrentPage(1);
+
+  }, [
+    search,
+    selectedCategory
+  ]);
+
+  // =========================
   // LOGOUT
   // =========================
   const handleLogout = () => {
@@ -119,22 +169,6 @@ const Shop = () => {
     window.location.reload();
 
   };
-
-  // =========================
-  // RESET PAGE WHEN SEARCH
-  // =========================
-  useEffect(() => {
-
-    setCurrentPage(1);
-
-  }, [search, selectedCategory]);
-
-  // =========================
-  // PAGINATION
-  // =========================
-  const totalPages = Math.ceil(
-    products.length / productsPerPage
-  );
 
   // =========================
   // UI
@@ -157,6 +191,7 @@ const Shop = () => {
           <div className="flex items-center gap-4 flex-wrap">
 
             {user ? (
+
               <>
                 <span className="font-medium">
                   Xin chào, {user.username}
@@ -169,7 +204,9 @@ const Shop = () => {
                   Đăng xuất
                 </button>
               </>
+
             ) : (
+
               <>
                 <Link
                   to="/login"
@@ -185,6 +222,7 @@ const Shop = () => {
                   Đăng ký
                 </Link>
               </>
+
             )}
 
             <Link
@@ -195,12 +233,14 @@ const Shop = () => {
             </Link>
 
             {user && (
+
               <Link
                 to="/orders"
                 className="bg-white text-blue-600 px-4 py-2 rounded-xl font-semibold hover:bg-gray-100 transition"
               >
                 Đơn hàng
               </Link>
+
             )}
 
           </div>
@@ -220,17 +260,19 @@ const Shop = () => {
             onClick={() =>
               setSelectedCategory(null)
             }
-            className={`px-5 py-2 rounded-full font-medium shadow-sm transition
+            className={`
+              px-5 py-2 rounded-full font-medium shadow-sm transition
               ${
                 selectedCategory === null
                   ? "bg-blue-500 text-white"
                   : "bg-white hover:bg-gray-100"
-              }`}
+              }
+            `}
           >
             Tất cả
           </button>
 
-          {/* CATEGORY BUTTON */}
+          {/* CATEGORY */}
           {categories.map(cat => (
 
             <button
@@ -238,12 +280,14 @@ const Shop = () => {
               onClick={() =>
                 setSelectedCategory(cat.id)
               }
-              className={`px-5 py-2 rounded-full font-medium shadow-sm transition
+              className={`
+                px-5 py-2 rounded-full font-medium shadow-sm transition
                 ${
                   selectedCategory === cat.id
                     ? "bg-blue-500 text-white"
                     : "bg-white hover:bg-gray-100"
-                }`}
+                }
+              `}
             >
               {cat.name}
             </button>
@@ -260,7 +304,9 @@ const Shop = () => {
             placeholder="Tìm sản phẩm..."
             value={search}
             onChange={(e) =>
-              setSearch(e.target.value)
+              setSearch(
+                e.target.value
+              )
             }
             className="w-full border p-3 rounded-xl shadow-sm"
           />
@@ -272,34 +318,37 @@ const Shop = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
-            {[...Array(6)].map((_, index) => (
+            {[...Array(6)].map(
+              (_, index) => (
 
-              <div
-                key={index}
-                className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse"
-              >
+                <div
+                  key={index}
+                  className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse"
+                >
 
-                <div className="h-56 bg-gray-300"></div>
+                  <div className="h-56 bg-gray-300"></div>
 
-                <div className="p-4">
+                  <div className="p-4">
 
-                  <div className="h-6 bg-gray-300 rounded mb-4"></div>
+                    <div className="h-6 bg-gray-300 rounded mb-4"></div>
 
-                  <div className="h-6 w-1/2 bg-gray-300 rounded mb-6"></div>
+                    <div className="h-6 w-1/2 bg-gray-300 rounded mb-6"></div>
 
-                  <div className="h-12 bg-gray-300 rounded-xl"></div>
+                    <div className="h-12 bg-gray-300 rounded-xl"></div>
+
+                  </div>
 
                 </div>
 
-              </div>
-
-            ))}
+              )
+            )}
 
           </div>
 
         ) : (
 
           <>
+
             {/* ================= PRODUCTS ================= */}
             {products.length === 0 ? (
 
@@ -320,7 +369,10 @@ const Shop = () => {
 
                     {/* IMAGE */}
                     <img
-                      src={p.image}
+                      src={
+                        p.images?.[0] ||
+                        "https://via.placeholder.com/500x500?text=No+Image"
+                      }
                       alt={p.name}
                       className="h-56 w-full object-cover"
                     />
@@ -366,29 +418,46 @@ const Shop = () => {
                 <button
                   disabled={currentPage === 1}
                   onClick={() =>
-                    setCurrentPage(prev => prev - 1)
+                    setCurrentPage(
+                      prev => prev - 1
+                    )
                   }
-                  className={`px-5 py-2 rounded-xl font-semibold transition
+                  className={`
+                    px-5 py-2 rounded-xl font-semibold transition
                     ${
                       currentPage === 1
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                         : "bg-blue-500 hover:bg-blue-600 text-white"
-                    }`}
+                    }
+                  `}
                 >
                   ← Trước
                 </button>
 
                 {/* PAGE */}
                 <span className="font-semibold text-lg">
-                  Trang {currentPage}
+                  Trang {currentPage} /{" "}
+                  {totalPages}
                 </span>
 
                 {/* NEXT */}
                 <button
-                  onClick={() =>
-                    setCurrentPage(prev => prev + 1)
+                  disabled={
+                    currentPage === totalPages
                   }
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-xl font-semibold transition"
+                  onClick={() =>
+                    setCurrentPage(
+                      prev => prev + 1
+                    )
+                  }
+                  className={`
+                    px-5 py-2 rounded-xl font-semibold transition
+                    ${
+                      currentPage === totalPages
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-blue-500 hover:bg-blue-600 text-white"
+                    }
+                  `}
                 >
                   Tiếp →
                 </button>

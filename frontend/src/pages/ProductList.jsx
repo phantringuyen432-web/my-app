@@ -4,16 +4,21 @@ import { toast } from "react-toastify";
 
 const ProductList = () => {
 
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] =
+    useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] =
+    useState("");
 
   // PAGINATION
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] =
+    useState(1);
 
-  const [totalPages, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] =
+    useState(1);
 
   const navigate = useNavigate();
 
@@ -33,9 +38,24 @@ const ProductList = () => {
 
         console.log(data);
 
-        setProducts(data.products || []);
+        const parsedProducts =
+          (data.products || []).map(p => ({
 
-        setTotalPages(data.totalPages || 1);
+            ...p,
+
+            // parse images
+            images:
+              typeof p.images === "string"
+                ? JSON.parse(p.images)
+                : p.images || []
+
+          }));
+
+        setProducts(parsedProducts);
+
+        setTotalPages(
+          data.totalPages || 1
+        );
 
         setLoading(false);
 
@@ -45,7 +65,9 @@ const ProductList = () => {
 
         console.log(err);
 
-        toast.error("Lỗi tải sản phẩm");
+        toast.error(
+          "Lỗi tải sản phẩm"
+        );
 
         setProducts([]);
 
@@ -66,9 +88,10 @@ const ProductList = () => {
   // =========================
   const handleDelete = (id) => {
 
-    const confirmDelete = window.confirm(
-      "Bạn có chắc muốn xóa sản phẩm này?"
-    );
+    const confirmDelete =
+      window.confirm(
+        "Bạn có chắc muốn xóa sản phẩm này?"
+      );
 
     if (!confirmDelete) return;
 
@@ -82,7 +105,9 @@ const ProductList = () => {
 
       .then(() => {
 
-        toast.success("Đã xóa sản phẩm");
+        toast.success(
+          "Đã xóa sản phẩm"
+        );
 
         fetchProducts();
 
@@ -92,7 +117,9 @@ const ProductList = () => {
 
         console.log(err);
 
-        toast.error("Xóa thất bại");
+        toast.error(
+          "Xóa thất bại"
+        );
 
       });
 
@@ -128,7 +155,9 @@ const ProductList = () => {
 
         <button
           onClick={() =>
-            navigate("/admin/add-product")
+            navigate(
+              "/admin/add-product"
+            )
           }
           className="bg-green-500 hover:bg-green-600 text-white px-5 py-3 rounded-xl font-semibold transition"
         >
@@ -146,7 +175,9 @@ const ProductList = () => {
           value={search}
           onChange={(e) => {
 
-            setSearch(e.target.value);
+            setSearch(
+              e.target.value
+            );
 
             setCurrentPage(1);
 
@@ -177,12 +208,17 @@ const ProductList = () => {
               {/* LEFT */}
               <div className="flex items-center gap-5">
 
+                {/* IMAGE */}
                 <img
-                  src={p.image}
+                  src={
+                    p.images?.[0] ||
+                    "https://placehold.co/200x200?text=No+Image"
+                  }
                   alt={p.name}
                   className="w-24 h-24 object-cover rounded-2xl border"
                 />
 
+                {/* INFO */}
                 <div className="space-y-2">
 
                   <p className="text-xl font-bold">
@@ -192,7 +228,13 @@ const ProductList = () => {
                   <p className="text-red-500 font-semibold text-lg">
                     {Number(
                       p.price
-                    ).toLocaleString()} VND
+                    ).toLocaleString()}{" "}
+                    VND
+                  </p>
+
+                  {/* IMAGE COUNT */}
+                  <p className="text-sm text-gray-500">
+                    {p.images?.length || 0} ảnh
                   </p>
 
                 </div>
@@ -202,6 +244,7 @@ const ProductList = () => {
               {/* RIGHT */}
               <div className="flex gap-3">
 
+                {/* EDIT */}
                 <button
                   onClick={() =>
                     navigate(
@@ -213,6 +256,7 @@ const ProductList = () => {
                   Sửa
                 </button>
 
+                {/* DELETE */}
                 <button
                   onClick={() =>
                     handleDelete(p.id)
@@ -240,7 +284,9 @@ const ProductList = () => {
           <button
             disabled={currentPage === 1}
             onClick={() =>
-              setCurrentPage(prev => prev - 1)
+              setCurrentPage(
+                prev => prev - 1
+              )
             }
             className={`px-5 py-2 rounded-xl font-semibold
             ${
@@ -257,9 +303,13 @@ const ProductList = () => {
           </span>
 
           <button
-            disabled={currentPage === totalPages}
+            disabled={
+              currentPage === totalPages
+            }
             onClick={() =>
-              setCurrentPage(prev => prev + 1)
+              setCurrentPage(
+                prev => prev + 1
+              )
             }
             className={`px-5 py-2 rounded-xl font-semibold
             ${

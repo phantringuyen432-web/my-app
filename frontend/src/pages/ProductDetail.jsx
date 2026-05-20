@@ -7,36 +7,84 @@ const ProductDetail = ({ addToCart }) => {
   const { id } = useParams();
 
   const [product, setProduct] = useState(null);
+
   const [variants, setVariants] = useState([]);
 
-  const [selectedColor, setSelectedColor] = useState("");
-  const [selectedSize, setSelectedSize] = useState("");
+  // MULTIPLE IMAGES
+  const [selectedImage, setSelectedImage] =
+    useState("");
 
-  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [selectedColor, setSelectedColor] =
+    useState("");
+
+  const [selectedSize, setSelectedSize] =
+    useState("");
+
+  const [selectedVariant, setSelectedVariant] =
+    useState(null);
+
   const user = JSON.parse(
     localStorage.getItem("user")
   );
 
-  // load product detail
+  // =========================
+  // FETCH PRODUCT DETAIL
+  // =========================
   useEffect(() => {
 
-    fetch(`https://my-app-ne36.onrender.com/api/product/${id}`)
+    fetch(
+      `https://my-app-ne36.onrender.com/api/product/${id}`
+    )
       .then(res => res.json())
+
       .then(data => {
 
+        console.log(data);
+
         setProduct(data.product);
-        setVariants(data.variants);
+
+        setVariants(data.variants || []);
+
+        // image đầu tiên
+        if (
+          data.product?.images &&
+          data.product.images.length > 0
+        ) {
+
+          setSelectedImage(
+            data.product.images[0]
+          );
+
+        }
+
+      })
+
+      .catch(err => {
+
+        console.log(err);
+
+        toast.error(
+          "Lỗi tải sản phẩm"
+        );
 
       });
 
   }, [id]);
 
-  // tìm variant theo size + màu
+  // =========================
+  // FIND VARIANT
+  // =========================
   useEffect(() => {
 
-    if (!selectedColor || !selectedSize) {
+    if (
+      !selectedColor ||
+      !selectedSize
+    ) {
+
       setSelectedVariant(null);
+
       return;
+
     }
 
     const found = variants.find(
@@ -47,39 +95,68 @@ const ProductDetail = ({ addToCart }) => {
 
     setSelectedVariant(found || null);
 
-  }, [selectedColor, selectedSize, variants]);
+  }, [
+    selectedColor,
+    selectedSize,
+    variants
+  ]);
 
-  // loading
-if (!product) {
-  return (
-    <div className="min-h-screen bg-gray-100 py-10 px-4">
-      <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-lg p-8 grid md:grid-cols-2 gap-10 animate-pulse">
-        {/* IMAGE */}
-        <div className="w-full h-[500px] bg-gray-300 rounded-2xl"></div>
-        {/* INFO */}
-        <div>
-          <div className="h-10 bg-gray-300 rounded mb-6"></div>
-          <div className="h-8 w-1/2 bg-gray-300 rounded mb-8"></div>
-          <div className="h-28 bg-gray-300 rounded mb-8"></div>
-          <div className="h-14 bg-gray-300 rounded-xl mb-6"></div>
-          <div className="h-14 bg-gray-300 rounded-xl mb-6"></div>
-          <div className="h-16 bg-gray-300 rounded-2xl"></div>
+  // =========================
+  // LOADING
+  // =========================
+  if (!product) {
+
+    return (
+
+      <div className="min-h-screen bg-gray-100 py-10 px-4">
+
+        <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-lg p-8 grid md:grid-cols-2 gap-10 animate-pulse">
+
+          <div className="w-full h-[500px] bg-gray-300 rounded-2xl"></div>
+
+          <div>
+
+            <div className="h-10 bg-gray-300 rounded mb-6"></div>
+
+            <div className="h-8 w-1/2 bg-gray-300 rounded mb-8"></div>
+
+            <div className="h-28 bg-gray-300 rounded mb-8"></div>
+
+            <div className="h-14 bg-gray-300 rounded-xl mb-6"></div>
+
+            <div className="h-14 bg-gray-300 rounded-xl mb-6"></div>
+
+            <div className="h-16 bg-gray-300 rounded-2xl"></div>
+
+          </div>
+
         </div>
-      </div>
-    </div>
-  );
-}
 
-  // unique colors
+      </div>
+
+    );
+
+  }
+
+  // =========================
+  // UNIQUE COLORS
+  // =========================
   const colors = [
-    ...new Set(variants.map(v => v.color))
+    ...new Set(
+      variants.map(v => v.color)
+    )
   ];
 
-  // unique sizes theo màu
+  // =========================
+  // UNIQUE SIZES
+  // =========================
   const sizes = [
     ...new Set(
       variants
-        .filter(v => v.color === selectedColor)
+        .filter(
+          v =>
+            v.color === selectedColor
+        )
         .map(v => v.size)
     )
   ];
@@ -93,11 +170,44 @@ if (!product) {
         {/* IMAGE */}
         <div>
 
+          {/* MAIN IMAGE */}
           <img
-            src={product.image}
+            src={selectedImage}
             alt={product.name}
-            className="w-full h-[500px] object-cover rounded-2xl"
+            className="w-full h-[500px] object-cover rounded-2xl border"
           />
+
+          {/* THUMBNAILS */}
+          {product.images?.length > 0 && (
+
+            <div className="flex gap-4 mt-4 flex-wrap">
+
+              {product.images.map(
+                (img, index) => (
+
+                  <img
+                    key={index}
+                    src={img}
+                    alt={`thumb-${index}`}
+                    onClick={() =>
+                      setSelectedImage(img)
+                    }
+                    className={`
+                      w-24 h-24 object-cover rounded-xl border-2 cursor-pointer transition
+                      ${
+                        selectedImage === img
+                          ? "border-black scale-105"
+                          : "border-gray-300 hover:border-gray-500"
+                      }
+                    `}
+                  />
+
+                )
+              )}
+
+            </div>
+
+          )}
 
         </div>
 
@@ -111,7 +221,10 @@ if (!product) {
 
           {/* PRICE */}
           <p className="text-3xl text-red-500 font-bold mb-6">
-            {Number(product.price).toLocaleString()} VND
+            {Number(
+              product.price
+            ).toLocaleString()}{" "}
+            VND
           </p>
 
           {/* DESCRIPTION */}
@@ -136,7 +249,6 @@ if (!product) {
 
                     setSelectedColor(color);
 
-                    // reset size khi đổi màu
                     setSelectedSize("");
 
                     setSelectedVariant(null);
@@ -175,7 +287,9 @@ if (!product) {
 
                   <button
                     key={size}
-                    onClick={() => setSelectedSize(size)}
+                    onClick={() =>
+                      setSelectedSize(size)
+                    }
                     className={`
                       w-14 h-14 rounded-xl border font-semibold transition
                       ${
@@ -226,42 +340,77 @@ if (!product) {
               selectedVariant.stock <= 0
             }
             onClick={() => {
-                // chưa login
-                if (!user) {
-                  toast.warning(
-                    "Vui lòng đăng nhập!"
-                  );
-                  return;
-                }
-                // chưa chọn biến thể
-                if (!selectedVariant) {
-                  toast.warning(
-                    "Vui lòng chọn size và màu"
-                  );
-                  return;
-                }
-                // hết hàng
-                if (selectedVariant.stock <= 0) {
-                  toast.error("Sản phẩm đã hết hàng");
-                  return;
-                }
-                // add cart
-                addToCart({
-                  product_id: product.id,
-                  variant_id: selectedVariant.id,
-                  name: product.name,
-                  image: product.image,
-                  price: product.price,
-                  size: selectedVariant.size,
-                  color: selectedVariant.color,
-                  stock: selectedVariant.stock,
-                  quantity: 1
-                });
-                toast.success(
-                  "Đã thêm vào giỏ hàng"
-                );
-            }}
 
+              // chưa login
+              if (!user) {
+
+                toast.warning(
+                  "Vui lòng đăng nhập!"
+                );
+
+                return;
+
+              }
+
+              // chưa chọn biến thể
+              if (!selectedVariant) {
+
+                toast.warning(
+                  "Vui lòng chọn size và màu"
+                );
+
+                return;
+
+              }
+
+              // hết hàng
+              if (
+                selectedVariant.stock <= 0
+              ) {
+
+                toast.error(
+                  "Sản phẩm đã hết hàng"
+                );
+
+                return;
+
+              }
+
+              // add cart
+              addToCart({
+
+                product_id: product.id,
+
+                variant_id:
+                  selectedVariant.id,
+
+                name: product.name,
+
+                image:
+                  selectedImage ||
+
+                  product.images?.[0],
+
+                price: product.price,
+
+                size:
+                  selectedVariant.size,
+
+                color:
+                  selectedVariant.color,
+
+                stock:
+                  selectedVariant.stock,
+
+                quantity: 1
+
+              });
+
+              toast.success(
+                "Đã thêm vào giỏ hàng"
+              );
+
+            }}
             className={`
               w-full py-4 rounded-2xl text-lg font-semibold transition
               ${
