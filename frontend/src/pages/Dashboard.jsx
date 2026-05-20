@@ -11,6 +11,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  
   Legend
 } from "recharts";
 
@@ -72,7 +73,7 @@ const Dashboard = () => {
           ),
 
           fetch(
-            "https://my-app-ne36.onrender.com/api/order"
+            "https://my-app-ne36.onrender.com/api/order/admin/all"
           )
 
         ]);
