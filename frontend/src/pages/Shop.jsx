@@ -352,10 +352,11 @@ const Shop = () => {
             {/* ================= PRODUCTS ================= */}
             {products.length === 0 ? (
 
-              <div className="text-center py-20 text-gray-500 text-xl">
-                Không tìm thấy sản phẩm
+              <div className="text-center py-16">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-gray-200 flex items-center justify-center text-3xl">🔎</div>
+                <div className="mt-4 text-gray-600 font-semibold text-lg">Không tìm thấy sản phẩm</div>
+                <div className="mt-2 text-gray-500 text-sm">Thử đổi từ khóa hoặc chọn danh mục khác.</div>
               </div>
-
             ) : (
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
