@@ -220,10 +220,10 @@ function App() {
           path="/orders/:id"
           element={<OrderDetail />}
         />
-        
+
         <Route 
           path="/favorites" 
-          element={<FavoritePage />} 
+          element={<Favorite />} 
         />
 
         {/* ADMIN */}
