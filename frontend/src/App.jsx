@@ -18,7 +18,7 @@ import EditProduct from "./pages/EditProduct";
 import ProductList from "./pages/ProductList";
 import Dashboard from "./pages/Dashboard";
 import ProductDetail from "./pages/ProductDetail";
-
+import FavoritePage from "./pages/FavoritePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/AdminLayout";
 
@@ -219,6 +219,10 @@ function App() {
         <Route
           path="/orders/:id"
           element={<OrderDetail />}
+        />
+        <Route 
+          path="/favorites" 
+          element={<FavoritePage />} 
         />
 
         {/* ADMIN */}
