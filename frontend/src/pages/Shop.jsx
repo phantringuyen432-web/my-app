@@ -360,7 +360,7 @@ const Shop = () => {
               to="/favorites"
               className="bg-pink-500 hover:bg-pink-600 px-4 py-2 rounded-xl font-semibold transition"
             >
-              ❤️ Yêu thích
+              Yêu thích
             </Link>
 
             <Link
