@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
 const Shop = () => {
 
@@ -17,6 +18,9 @@ const Shop = () => {
   ] = useState(null);
 
   const [products, setProducts] =
+    useState([]);
+
+  const [favorites, setFavorites] =
     useState([]);
 
   const [loading, setLoading] =
@@ -37,6 +41,9 @@ const Shop = () => {
   const user = JSON.parse(
     localStorage.getItem("user")
   );
+
+  const token =
+    localStorage.getItem("token");
 
   // =========================
   // FETCH CATEGORIES
@@ -61,6 +68,41 @@ const Shop = () => {
       });
 
   }, []);
+
+  // =========================
+  // FETCH FAVORITES
+  // =========================
+  useEffect(() => {
+
+    if (!token) return;
+
+    fetch(
+      "https://my-app-ne36.onrender.com/api/favorite",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+      .then(res => res.json())
+
+      .then(data => {
+
+        const ids = data.map(
+          item => item.product_id
+        );
+
+        setFavorites(ids);
+
+      })
+
+      .catch(err => {
+
+        console.log(err);
+
+      });
+
+  }, [token]);
 
   // =========================
   // FETCH PRODUCTS
@@ -115,8 +157,6 @@ const Shop = () => {
 
       .then(data => {
 
-        console.log(data);
-
         setProducts(
           data.products || []
         );
@@ -167,6 +207,97 @@ const Shop = () => {
     localStorage.removeItem("token");
 
     window.location.reload();
+
+  };
+
+  // =========================
+  // TOGGLE FAVORITE
+  // =========================
+  const toggleFavorite = async (
+    productId
+  ) => {
+
+    if (!token) {
+
+      toast.warning(
+        "Vui lòng đăng nhập"
+      );
+
+      return;
+
+    }
+
+    try {
+
+      const res = await fetch(
+        "https://my-app-ne36.onrender.com/api/favorite",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${token}`
+          },
+
+          body: JSON.stringify({
+            product_id: productId
+          })
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+
+        toast.error(
+          data.message ||
+          "Lỗi yêu thích"
+        );
+
+        return;
+
+      }
+
+      // update UI
+      if (
+        favorites.includes(productId)
+      ) {
+
+        setFavorites(
+          favorites.filter(
+            id => id !== productId
+          )
+        );
+
+        toast.info(
+          "Đã bỏ yêu thích"
+        );
+
+      } else {
+
+        setFavorites([
+          ...favorites,
+          productId
+        ]);
+
+        toast.success(
+          "Đã thêm yêu thích"
+        );
+
+      }
+
+    } catch (err) {
+
+      console.log(err);
+
+      toast.error(
+        "Có lỗi xảy ra"
+      );
+
+    }
 
   };
 
@@ -226,6 +357,13 @@ const Shop = () => {
             )}
 
             <Link
+              to="/favorites"
+              className="bg-pink-500 hover:bg-pink-600 px-4 py-2 rounded-xl font-semibold transition"
+            >
+              ❤️ Yêu thích
+            </Link>
+
+            <Link
               to="/cart"
               className="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-xl font-semibold transition"
             >
@@ -255,7 +393,6 @@ const Shop = () => {
         {/* CATEGORY */}
         <div className="flex flex-wrap gap-3 mb-8 justify-center">
 
-          {/* ALL */}
           <button
             onClick={() =>
               setSelectedCategory(null)
@@ -272,7 +409,6 @@ const Shop = () => {
             Tất cả
           </button>
 
-          {/* CATEGORY */}
           {categories.map(cat => (
 
             <button
@@ -353,10 +489,19 @@ const Shop = () => {
             {products.length === 0 ? (
 
               <div className="text-center py-16">
-                <div className="mx-auto w-16 h-16 rounded-2xl bg-gray-200 flex items-center justify-center text-3xl">🔎</div>
-                <div className="mt-4 text-gray-600 font-semibold text-lg">Không tìm thấy sản phẩm</div>
-                <div className="mt-2 text-gray-500 text-sm">Thử đổi từ khóa hoặc chọn danh mục khác.</div>
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-gray-200 flex items-center justify-center text-3xl">
+                  🔎
+                </div>
+
+                <div className="mt-4 text-gray-600 font-semibold text-lg">
+                  Không tìm thấy sản phẩm
+                </div>
+
+                <div className="mt-2 text-gray-500 text-sm">
+                  Thử đổi từ khóa hoặc chọn danh mục khác.
+                </div>
               </div>
+
             ) : (
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -365,8 +510,24 @@ const Shop = () => {
 
                   <div
                     key={p.id}
-                    className="bg-white rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition duration-300 overflow-hidden flex flex-col"
+                    className="bg-white rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition duration-300 overflow-hidden flex flex-col relative"
                   >
+
+                    {/* FAVORITE */}
+                    <button
+                      onClick={() =>
+                        toggleFavorite(
+                          p.id
+                        )
+                      }
+                      className="absolute top-3 right-3 z-10 bg-white/90 hover:bg-white w-10 h-10 rounded-full shadow flex items-center justify-center text-2xl transition"
+                    >
+                      {favorites.includes(
+                        p.id
+                      )
+                        ? "❤️"
+                        : "🤍"}
+                    </button>
 
                     {/* IMAGE */}
                     <img
@@ -478,7 +639,6 @@ const Shop = () => {
 
         <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-8">
 
-          {/* SHOP */}
           <div>
 
             <h2 className="text-2xl font-bold text-white mb-4">
@@ -493,7 +653,6 @@ const Shop = () => {
 
           </div>
 
-          {/* LINKS */}
           <div>
 
             <h3 className="text-xl font-semibold text-white mb-4">
@@ -513,6 +672,15 @@ const Shop = () => {
 
               <li>
                 <Link
+                  to="/favorites"
+                  className="hover:text-white transition"
+                >
+                  Yêu thích
+                </Link>
+              </li>
+
+              <li>
+                <Link
                   to="/cart"
                   className="hover:text-white transition"
                 >
@@ -520,20 +688,10 @@ const Shop = () => {
                 </Link>
               </li>
 
-              <li>
-                <Link
-                  to="/orders"
-                  className="hover:text-white transition"
-                >
-                  Đơn hàng
-                </Link>
-              </li>
-
             </ul>
 
           </div>
 
-          {/* CONTACT */}
           <div>
 
             <h3 className="text-xl font-semibold text-white mb-4">

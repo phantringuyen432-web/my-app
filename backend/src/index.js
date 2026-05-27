@@ -9,27 +9,65 @@ require("./config/mail");
 
 const app = express();
 
+// ROUTES
 const productRoutes = require("./routes/productRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const authRoutes = require("./routes/authRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
+const favoriteRoutes = require("./routes/favoriteRoutes");
 
 app.use(cors());
 app.use(express.json());
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// STATIC
+app.use(
+  "/uploads",
+  express.static(
+    path.join(__dirname, "uploads")
+  )
+);
 
-app.use("/api/product", productRoutes);
-app.use("/api/order", orderRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/category", categoryRoutes);
+// API ROUTES
+app.use(
+  "/api/product",
+  productRoutes
+);
 
+app.use(
+  "/api/order",
+  orderRoutes
+);
+
+app.use(
+  "/api/auth",
+  authRoutes
+);
+
+app.use(
+  "/api/category",
+  categoryRoutes
+);
+
+app.use(
+  "/api/favorite",
+  favoriteRoutes
+);
+
+// TEST
 app.get("/", (req, res) => {
+
   res.send("API is running");
+
 });
 
-const PORT = process.env.PORT || 3000;
+// SERVER
+const PORT =
+  process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+
+  console.log(
+    `Server running on port ${PORT}`
+  );
+
 });

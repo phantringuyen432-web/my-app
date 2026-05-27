@@ -23,9 +23,16 @@ const ProductDetail = ({ addToCart }) => {
   const [selectedVariant, setSelectedVariant] =
     useState(null);
 
+  // FAVORITE
+  const [isFavorite, setIsFavorite] =
+    useState(false);
+
   const user = JSON.parse(
     localStorage.getItem("user")
   );
+
+  const token =
+    localStorage.getItem("token");
 
   // =========================
   // FETCH PRODUCT DETAIL
@@ -70,6 +77,113 @@ const ProductDetail = ({ addToCart }) => {
       });
 
   }, [id]);
+
+  // =========================
+  // CHECK FAVORITE
+  // =========================
+  useEffect(() => {
+
+    if (!user || !token) return;
+
+    fetch(
+      "https://my-app-ne36.onrender.com/api/favorite",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+      .then(res => res.json())
+
+      .then(data => {
+
+        const found = data.find(
+          item =>
+            item.product_id === Number(id)
+        );
+
+        setIsFavorite(!!found);
+
+      })
+
+      .catch(err => {
+
+        console.log(err);
+
+      });
+
+  }, [id, token, user]);
+
+  // =========================
+  // TOGGLE FAVORITE
+  // =========================
+  const toggleFavorite = async () => {
+
+    if (!user) {
+
+      toast.warning(
+        "Vui lòng đăng nhập"
+      );
+
+      return;
+
+    }
+
+    try {
+
+      const res = await fetch(
+        "https://my-app-ne36.onrender.com/api/favorite",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${token}`
+          },
+
+          body: JSON.stringify({
+            product_id: product.id
+          })
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+
+        toast.error(
+          data.message ||
+          "Lỗi yêu thích"
+        );
+
+        return;
+
+      }
+
+      setIsFavorite(
+        data.favorite
+      );
+
+      toast.success(
+        data.favorite
+          ? "Đã thêm vào yêu thích ❤️"
+          : "Đã bỏ yêu thích"
+      );
+
+    } catch (err) {
+
+      console.log(err);
+
+      toast.error(
+        "Lỗi server"
+      );
+
+    }
+
+  };
 
   // =========================
   // FIND VARIANT
@@ -214,10 +328,28 @@ const ProductDetail = ({ addToCart }) => {
         {/* INFO */}
         <div>
 
-          {/* NAME */}
-          <h1 className="text-4xl font-bold mb-4">
-            {product.name}
-          </h1>
+          {/* NAME + FAVORITE */}
+          <div className="flex items-start justify-between gap-4 mb-4">
+
+            <h1 className="text-4xl font-bold">
+              {product.name}
+            </h1>
+
+            <button
+              onClick={toggleFavorite}
+              className={`
+                text-4xl transition
+                ${
+                  isFavorite
+                    ? "text-red-500"
+                    : "text-gray-300 hover:text-red-400"
+                }
+              `}
+            >
+              ♥
+            </button>
+
+          </div>
 
           {/* PRICE */}
           <p className="text-3xl text-red-500 font-bold mb-6">
