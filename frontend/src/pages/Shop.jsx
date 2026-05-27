@@ -86,29 +86,13 @@ const Shop = () => {
         }
       }
     )
-      .then(async res => {
-
-        const data =
-          await res.json();
-
-        if (!res.ok) {
-
-          throw new Error(
-            data.message ||
-            "Lỗi tải yêu thích"
-          );
-
-        }
-
-        return data;
-
-      })
+      .then(res => res.json())
 
       .then(data => {
 
-        // lấy product_id
+        // lấy id sản phẩm
         const ids = data.map(
-          item => item.product_id
+          item => item.id
         );
 
         setFavorites(ids);
@@ -225,7 +209,7 @@ const Shop = () => {
 
     localStorage.removeItem("token");
 
-    window.location.href = "/";
+    window.location.reload();
 
   };
 
@@ -248,46 +232,41 @@ const Shop = () => {
 
     try {
 
-      const res = await fetch(
-        "https://my-app-ne36.onrender.com/api/favorite",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-
-            Authorization:
-              `Bearer ${token}`
-          },
-
-          body: JSON.stringify({
-            product_id: productId
-          })
-        }
-      );
-
-      const data =
-        await res.json();
-
-      if (!res.ok) {
-
-        toast.error(
-          data.message ||
-          "Lỗi yêu thích"
-        );
-
-        return;
-
-      }
-
-      // backend toggle
+      // =========================
+      // REMOVE FAVORITE
+      // =========================
       if (
         favorites.includes(productId)
       ) {
 
-        setFavorites(prev =>
-          prev.filter(
+        const res = await fetch(
+          `https://my-app-ne36.onrender.com/api/favorite/${productId}`,
+          {
+            method: "DELETE",
+
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            }
+          }
+        );
+
+        const data =
+          await res.json();
+
+        if (!res.ok) {
+
+          toast.error(
+            data.message ||
+            "Lỗi bỏ yêu thích"
+          );
+
+          return;
+
+        }
+
+        setFavorites(
+          favorites.filter(
             id => id !== productId
           )
         );
@@ -296,10 +275,48 @@ const Shop = () => {
           "Đã bỏ yêu thích"
         );
 
-      } else {
+      }
 
-        setFavorites(prev => [
-          ...prev,
+      // =========================
+      // ADD FAVORITE
+      // =========================
+      else {
+
+        const res = await fetch(
+          "https://my-app-ne36.onrender.com/api/favorite/add",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              Authorization:
+                `Bearer ${token}`
+            },
+
+            body: JSON.stringify({
+              product_id: productId
+            })
+          }
+        );
+
+        const data =
+          await res.json();
+
+        if (!res.ok) {
+
+          toast.error(
+            data.message ||
+            "Lỗi yêu thích"
+          );
+
+          return;
+
+        }
+
+        setFavorites([
+          ...favorites,
           productId
         ]);
 
@@ -472,39 +489,13 @@ const Shop = () => {
         {/* ================= LOADING ================= */}
         {loading ? (
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-
-            {[...Array(6)].map(
-              (_, index) => (
-
-                <div
-                  key={index}
-                  className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse"
-                >
-
-                  <div className="h-56 bg-gray-300"></div>
-
-                  <div className="p-4">
-
-                    <div className="h-6 bg-gray-300 rounded mb-4"></div>
-
-                    <div className="h-6 w-1/2 bg-gray-300 rounded mb-6"></div>
-
-                    <div className="h-12 bg-gray-300 rounded-xl"></div>
-
-                  </div>
-
-                </div>
-
-              )
-            )}
-
+          <div className="text-center py-20 text-xl">
+            Đang tải sản phẩm...
           </div>
 
         ) : (
 
           <>
-
             {/* PRODUCTS */}
             {products.length === 0 ? (
 
