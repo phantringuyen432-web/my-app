@@ -11,28 +11,34 @@ exports.addFavorite = async (req, res) => {
 
     const { product_id } = req.body;
 
-    // check already favorite
-    const check =
-      await db.query(
-        `
-        SELECT *
-        FROM favorites
-        WHERE user_id = $1
-        AND product_id = $2
-        `,
-        [userId, product_id]
-      );
-
-    if (check.rows.length > 0) {
+    if (!product_id) {
 
       return res.status(400).json({
-        message:
-          "Sản phẩm đã tồn tại trong yêu thích"
+        message: "Thiếu product_id"
       });
 
     }
 
-    // insert favorite
+    // CHECK EXIST
+    const check = await db.query(
+      `
+      SELECT *
+      FROM favorites
+      WHERE user_id = $1
+      AND product_id = $2
+      `,
+      [userId, product_id]
+    );
+
+    if (check.rows.length > 0) {
+
+      return res.status(400).json({
+        message: "Sản phẩm đã tồn tại trong yêu thích"
+      });
+
+    }
+
+    // INSERT
     await db.query(
       `
       INSERT INTO favorites
@@ -43,16 +49,12 @@ exports.addFavorite = async (req, res) => {
     );
 
     res.json({
-      message:
-        "Đã thêm vào yêu thích"
+      message: "Đã thêm vào yêu thích"
     });
 
   } catch (err) {
 
-    console.log(
-      "ADD FAVORITE ERROR:",
-      err
-    );
+    console.log("ADD FAVORITE ERROR:", err);
 
     res.status(500).json({
       message: "Lỗi server"
@@ -71,8 +73,7 @@ exports.removeFavorite = async (req, res) => {
 
     const userId = req.user.id;
 
-    const productId =
-      req.params.productId;
+    const productId = req.params.productId;
 
     await db.query(
       `
@@ -84,16 +85,12 @@ exports.removeFavorite = async (req, res) => {
     );
 
     res.json({
-      message:
-        "Đã xóa khỏi yêu thích"
+      message: "Đã xóa khỏi yêu thích"
     });
 
   } catch (err) {
 
-    console.log(
-      "REMOVE FAVORITE ERROR:",
-      err
-    );
+    console.log("REMOVE FAVORITE ERROR:", err);
 
     res.status(500).json({
       message: "Lỗi server"
@@ -112,41 +109,39 @@ exports.getFavorites = async (req, res) => {
 
     const userId = req.user.id;
 
-    const result =
-      await db.query(
-        `
-        SELECT
-          products.*
-        FROM favorites
+    const result = await db.query(
+      `
+      SELECT
+        products.*
+      FROM favorites
 
-        JOIN products
-        ON favorites.product_id = products.id
+      JOIN products
+      ON favorites.product_id = products.id
 
-        WHERE favorites.user_id = $1
+      WHERE favorites.user_id = $1
 
-        ORDER BY favorites.id DESC
-        `,
-        [userId]
-      );
+      ORDER BY favorites.id DESC
+      `,
+      [userId]
+    );
 
-    const favorites =
-      result.rows.map(p => ({
+    // PARSE IMAGES
+    const favorites = result.rows.map(p => ({
 
-        ...p,
+      ...p,
 
-        images:
-          p.images || []
+      images:
+        typeof p.images === "string"
+          ? JSON.parse(p.images)
+          : p.images || []
 
-      }));
+    }));
 
     res.json(favorites);
 
   } catch (err) {
 
-    console.log(
-      "GET FAVORITES ERROR:",
-      err
-    );
+    console.log("GET FAVORITES ERROR:", err);
 
     res.status(500).json({
       message: "Lỗi server"
@@ -165,33 +160,25 @@ exports.checkFavorite = async (req, res) => {
 
     const userId = req.user.id;
 
-    const productId =
-      req.params.productId;
+    const productId = req.params.productId;
 
-    const result =
-      await db.query(
-        `
-        SELECT *
-        FROM favorites
-        WHERE user_id = $1
-        AND product_id = $2
-        `,
-        [userId, productId]
-      );
+    const result = await db.query(
+      `
+      SELECT *
+      FROM favorites
+      WHERE user_id = $1
+      AND product_id = $2
+      `,
+      [userId, productId]
+    );
 
     res.json({
-
-      isFavorite:
-        result.rows.length > 0
-
+      isFavorite: result.rows.length > 0
     });
 
   } catch (err) {
 
-    console.log(
-      "CHECK FAVORITE ERROR:",
-      err
-    );
+    console.log("CHECK FAVORITE ERROR:", err);
 
     res.status(500).json({
       message: "Lỗi server"

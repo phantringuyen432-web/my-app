@@ -6,14 +6,17 @@ const ProductDetail = ({ addToCart }) => {
 
   const { id } = useParams();
 
-  const [product, setProduct] = useState(null);
+  const [product, setProduct] =
+    useState(null);
 
-  const [variants, setVariants] = useState([]);
+  const [variants, setVariants] =
+    useState([]);
 
-  // MULTIPLE IMAGES
+  // IMAGES
   const [selectedImage, setSelectedImage] =
     useState("");
 
+  // VARIANTS
   const [selectedColor, setSelectedColor] =
     useState("");
 
@@ -27,6 +30,10 @@ const ProductDetail = ({ addToCart }) => {
   const [isFavorite, setIsFavorite] =
     useState(false);
 
+  const [favoriteLoading, setFavoriteLoading] =
+    useState(false);
+
+  // USER
   const user = JSON.parse(
     localStorage.getItem("user")
   );
@@ -46,13 +53,11 @@ const ProductDetail = ({ addToCart }) => {
 
       .then(data => {
 
-        console.log(data);
-
         setProduct(data.product);
 
         setVariants(data.variants || []);
 
-        // image đầu tiên
+        // IMAGE DEFAULT
         if (
           data.product?.images &&
           data.product.images.length > 0
@@ -83,10 +88,10 @@ const ProductDetail = ({ addToCart }) => {
   // =========================
   useEffect(() => {
 
-    if (!user || !token) return;
+    if (!token) return;
 
     fetch(
-      "https://my-app-ne36.onrender.com/api/favorite",
+      `https://my-app-ne36.onrender.com/api/favorite/check/${id}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -97,12 +102,9 @@ const ProductDetail = ({ addToCart }) => {
 
       .then(data => {
 
-        const found = data.find(
-          item =>
-            item.product_id === Number(id)
+        setIsFavorite(
+          data.isFavorite || false
         );
-
-        setIsFavorite(!!found);
 
       })
 
@@ -112,14 +114,14 @@ const ProductDetail = ({ addToCart }) => {
 
       });
 
-  }, [id, token, user]);
+  }, [id, token]);
 
   // =========================
   // TOGGLE FAVORITE
   // =========================
   const toggleFavorite = async () => {
 
-    if (!user) {
+    if (!user || !token) {
 
       toast.warning(
         "Vui lòng đăng nhập"
@@ -131,47 +133,88 @@ const ProductDetail = ({ addToCart }) => {
 
     try {
 
-      const res = await fetch(
-        "https://my-app-ne36.onrender.com/api/favorite",
-        {
-          method: "POST",
+      setFavoriteLoading(true);
 
-          headers: {
-            "Content-Type":
-              "application/json",
+      // REMOVE
+      if (isFavorite) {
 
-            Authorization:
-              `Bearer ${token}`
-          },
+        const res = await fetch(
+          `https://my-app-ne36.onrender.com/api/favorite/${product.id}`,
+          {
+            method: "DELETE",
 
-          body: JSON.stringify({
-            product_id: product.id
-          })
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-
-        toast.error(
-          data.message ||
-          "Lỗi yêu thích"
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            }
+          }
         );
 
-        return;
+        const data =
+          await res.json();
+
+        if (!res.ok) {
+
+          toast.error(
+            data.message ||
+            "Lỗi bỏ yêu thích"
+          );
+
+          return;
+
+        }
+
+        setIsFavorite(false);
+
+        toast.info(
+          "Đã bỏ yêu thích"
+        );
 
       }
 
-      setIsFavorite(
-        data.favorite
-      );
+      // ADD
+      else {
 
-      toast.success(
-        data.favorite
-          ? "Đã thêm vào yêu thích ❤️"
-          : "Đã bỏ yêu thích"
-      );
+        const res = await fetch(
+          "https://my-app-ne36.onrender.com/api/favorite/add",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              Authorization:
+                `Bearer ${token}`
+            },
+
+            body: JSON.stringify({
+              product_id: product.id
+            })
+          }
+        );
+
+        const data =
+          await res.json();
+
+        if (!res.ok) {
+
+          toast.error(
+            data.message ||
+            "Lỗi yêu thích"
+          );
+
+          return;
+
+        }
+
+        setIsFavorite(true);
+
+        toast.success(
+          "Đã thêm vào yêu thích ❤️"
+        );
+
+      }
 
     } catch (err) {
 
@@ -180,6 +223,10 @@ const ProductDetail = ({ addToCart }) => {
       toast.error(
         "Lỗi server"
       );
+
+    } finally {
+
+      setFavoriteLoading(false);
 
     }
 
@@ -253,7 +300,7 @@ const ProductDetail = ({ addToCart }) => {
   }
 
   // =========================
-  // UNIQUE COLORS
+  // COLORS
   // =========================
   const colors = [
     ...new Set(
@@ -262,7 +309,7 @@ const ProductDetail = ({ addToCart }) => {
   ];
 
   // =========================
-  // UNIQUE SIZES
+  // SIZES
   // =========================
   const sizes = [
     ...new Set(
@@ -337,6 +384,7 @@ const ProductDetail = ({ addToCart }) => {
 
             <button
               onClick={toggleFavorite}
+              disabled={favoriteLoading}
               className={`
                 text-4xl transition
                 ${
@@ -346,7 +394,9 @@ const ProductDetail = ({ addToCart }) => {
                 }
               `}
             >
-              ♥
+              {isFavorite
+                ? "❤️"
+                : "🤍"}
             </button>
 
           </div>
@@ -465,7 +515,7 @@ const ProductDetail = ({ addToCart }) => {
 
           )}
 
-          {/* BUTTON */}
+          {/* ADD CART */}
           <button
             disabled={
               !selectedVariant ||
@@ -473,7 +523,6 @@ const ProductDetail = ({ addToCart }) => {
             }
             onClick={() => {
 
-              // chưa login
               if (!user) {
 
                 toast.warning(
@@ -484,7 +533,6 @@ const ProductDetail = ({ addToCart }) => {
 
               }
 
-              // chưa chọn biến thể
               if (!selectedVariant) {
 
                 toast.warning(
@@ -495,7 +543,6 @@ const ProductDetail = ({ addToCart }) => {
 
               }
 
-              // hết hàng
               if (
                 selectedVariant.stock <= 0
               ) {
@@ -508,7 +555,6 @@ const ProductDetail = ({ addToCart }) => {
 
               }
 
-              // add cart
               addToCart({
 
                 product_id: product.id,

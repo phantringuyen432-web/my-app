@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+
 import { Link } from "react-router-dom";
+
 import { toast } from "react-toastify";
 
 const Favorite = () => {
@@ -24,6 +26,14 @@ const Favorite = () => {
   // =========================
   useEffect(() => {
 
+    if (!token) {
+
+      setLoading(false);
+
+      return;
+
+    }
+
     fetch(
       "https://my-app-ne36.onrender.com/api/favorite",
       {
@@ -32,11 +42,23 @@ const Favorite = () => {
         }
       }
     )
-      .then(res => res.json())
+      .then(async res => {
+
+        const data = await res.json();
+
+        if (!res.ok) {
+
+          throw new Error(
+            data.message || "Lỗi tải yêu thích"
+          );
+
+        }
+
+        return data;
+
+      })
 
       .then(data => {
-
-        console.log(data);
 
         setFavorites(data || []);
 
@@ -49,6 +71,7 @@ const Favorite = () => {
         console.log(err);
 
         toast.error(
+          err.message ||
           "Lỗi tải danh sách yêu thích"
         );
 
@@ -68,21 +91,14 @@ const Favorite = () => {
     try {
 
       const res = await fetch(
-        "https://my-app-ne36.onrender.com/api/favorite",
+        `https://my-app-ne36.onrender.com/api/favorite/${productId}`,
         {
-          method: "POST",
+          method: "DELETE",
 
           headers: {
-            "Content-Type":
-              "application/json",
-
             Authorization:
               `Bearer ${token}`
-          },
-
-          body: JSON.stringify({
-            product_id: productId
-          })
+          }
         }
       );
 
@@ -91,18 +107,17 @@ const Favorite = () => {
       if (!res.ok) {
 
         toast.error(
-          data.message ||
-          "Lỗi"
+          data.message || "Lỗi"
         );
 
         return;
 
       }
 
+      // UPDATE UI
       setFavorites(prev =>
         prev.filter(
-          item =>
-            item.product_id !== productId
+          item => item.id !== productId
         )
       );
 
@@ -222,6 +237,7 @@ const Favorite = () => {
                 <img
                   src={
                     item.images?.[0] ||
+
                     "https://via.placeholder.com/500x500?text=No+Image"
                   }
                   alt={item.name}
@@ -246,7 +262,7 @@ const Favorite = () => {
                   <div className="mt-auto flex gap-3 pt-5">
 
                     <Link
-                      to={`/product/${item.product_id}`}
+                      to={`/product/${item.id}`}
                       className="flex-1 text-center bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition"
                     >
                       Xem chi tiết
@@ -255,7 +271,7 @@ const Favorite = () => {
                     <button
                       onClick={() =>
                         removeFavorite(
-                          item.product_id
+                          item.id
                         )
                       }
                       className="px-4 bg-red-500 hover:bg-red-600 text-white rounded-xl transition"

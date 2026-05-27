@@ -7,7 +7,8 @@ const Shop = () => {
   // =========================
   // STATES
   // =========================
-  const [search, setSearch] = useState("");
+  const [search, setSearch] =
+    useState("");
 
   const [categories, setCategories] =
     useState([]);
@@ -80,7 +81,8 @@ const Shop = () => {
       "https://my-app-ne36.onrender.com/api/favorite",
       {
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization:
+            `Bearer ${token}`
         }
       }
     )
@@ -88,8 +90,9 @@ const Shop = () => {
 
       .then(data => {
 
+        // lấy id sản phẩm
         const ids = data.map(
-          item => item.product_id
+          item => item.id
         );
 
         setFavorites(ids);
@@ -229,42 +232,38 @@ const Shop = () => {
 
     try {
 
-      const res = await fetch(
-        "https://my-app-ne36.onrender.com/api/favorite",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-
-            Authorization:
-              `Bearer ${token}`
-          },
-
-          body: JSON.stringify({
-            product_id: productId
-          })
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-
-        toast.error(
-          data.message ||
-          "Lỗi yêu thích"
-        );
-
-        return;
-
-      }
-
-      // update UI
+      // =========================
+      // REMOVE FAVORITE
+      // =========================
       if (
         favorites.includes(productId)
       ) {
+
+        const res = await fetch(
+          `https://my-app-ne36.onrender.com/api/favorite/${productId}`,
+          {
+            method: "DELETE",
+
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            }
+          }
+        );
+
+        const data =
+          await res.json();
+
+        if (!res.ok) {
+
+          toast.error(
+            data.message ||
+            "Lỗi bỏ yêu thích"
+          );
+
+          return;
+
+        }
 
         setFavorites(
           favorites.filter(
@@ -276,7 +275,45 @@ const Shop = () => {
           "Đã bỏ yêu thích"
         );
 
-      } else {
+      }
+
+      // =========================
+      // ADD FAVORITE
+      // =========================
+      else {
+
+        const res = await fetch(
+          "https://my-app-ne36.onrender.com/api/favorite/add",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              Authorization:
+                `Bearer ${token}`
+            },
+
+            body: JSON.stringify({
+              product_id: productId
+            })
+          }
+        );
+
+        const data =
+          await res.json();
+
+        if (!res.ok) {
+
+          toast.error(
+            data.message ||
+            "Lỗi yêu thích"
+          );
+
+          return;
+
+        }
 
         setFavorites([
           ...favorites,
@@ -452,54 +489,26 @@ const Shop = () => {
         {/* ================= LOADING ================= */}
         {loading ? (
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-
-            {[...Array(6)].map(
-              (_, index) => (
-
-                <div
-                  key={index}
-                  className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse"
-                >
-
-                  <div className="h-56 bg-gray-300"></div>
-
-                  <div className="p-4">
-
-                    <div className="h-6 bg-gray-300 rounded mb-4"></div>
-
-                    <div className="h-6 w-1/2 bg-gray-300 rounded mb-6"></div>
-
-                    <div className="h-12 bg-gray-300 rounded-xl"></div>
-
-                  </div>
-
-                </div>
-
-              )
-            )}
-
+          <div className="text-center py-20 text-xl">
+            Đang tải sản phẩm...
           </div>
 
         ) : (
 
           <>
-
-            {/* ================= PRODUCTS ================= */}
+            {/* PRODUCTS */}
             {products.length === 0 ? (
 
               <div className="text-center py-16">
-                <div className="mx-auto w-16 h-16 rounded-2xl bg-gray-200 flex items-center justify-center text-3xl">
+
+                <div className="text-5xl mb-4">
                   🔎
                 </div>
 
-                <div className="mt-4 text-gray-600 font-semibold text-lg">
+                <div className="text-xl font-semibold text-gray-600">
                   Không tìm thấy sản phẩm
                 </div>
 
-                <div className="mt-2 text-gray-500 text-sm">
-                  Thử đổi từ khóa hoặc chọn danh mục khác.
-                </div>
               </div>
 
             ) : (
@@ -510,7 +519,7 @@ const Shop = () => {
 
                   <div
                     key={p.id}
-                    className="bg-white rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition duration-300 overflow-hidden flex flex-col relative"
+                    className="bg-white rounded-2xl shadow-md overflow-hidden relative hover:shadow-xl transition"
                   >
 
                     {/* FAVORITE */}
@@ -520,7 +529,7 @@ const Shop = () => {
                           p.id
                         )
                       }
-                      className="absolute top-3 right-3 z-10 bg-white/90 hover:bg-white w-10 h-10 rounded-full shadow flex items-center justify-center text-2xl transition"
+                      className="absolute top-3 right-3 z-10 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow"
                     >
                       {favorites.includes(
                         p.id
@@ -540,23 +549,22 @@ const Shop = () => {
                     />
 
                     {/* INFO */}
-                    <div className="p-4 flex flex-col flex-grow">
+                    <div className="p-4 flex flex-col">
 
-                      <h2 className="font-semibold text-lg line-clamp-2 min-h-[56px]">
+                      <h2 className="font-semibold text-lg min-h-[56px]">
                         {p.name}
                       </h2>
 
-                      <p className="text-red-500 font-bold text-xl mt-3">
+                      <p className="text-red-500 font-bold text-xl mt-2">
                         {Number(
                           p.price
                         ).toLocaleString()}{" "}
                         VND
                       </p>
 
-                      {/* BUTTON */}
                       <Link
                         to={`/product/${p.id}`}
-                        className="mt-auto block text-center bg-blue-500 hover:bg-blue-700 text-white py-3 rounded-xl transition duration-200 font-semibold"
+                        className="mt-4 bg-blue-500 hover:bg-blue-600 text-white text-center py-3 rounded-xl font-semibold transition"
                       >
                         Xem chi tiết
                       </Link>
@@ -571,38 +579,30 @@ const Shop = () => {
 
             )}
 
-            {/* ================= PAGINATION ================= */}
+            {/* PAGINATION */}
             {products.length > 0 && (
 
-              <div className="flex justify-center items-center gap-4 mt-10 flex-wrap">
+              <div className="flex justify-center items-center gap-4 mt-10">
 
-                {/* PREV */}
                 <button
-                  disabled={currentPage === 1}
+                  disabled={
+                    currentPage === 1
+                  }
                   onClick={() =>
                     setCurrentPage(
                       prev => prev - 1
                     )
                   }
-                  className={`
-                    px-5 py-2 rounded-xl font-semibold transition
-                    ${
-                      currentPage === 1
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-blue-500 hover:bg-blue-600 text-white"
-                    }
-                  `}
+                  className="bg-blue-500 text-white px-5 py-2 rounded-xl disabled:bg-gray-300"
                 >
                   ← Trước
                 </button>
 
-                {/* PAGE */}
-                <span className="font-semibold text-lg">
+                <span className="font-semibold">
                   Trang {currentPage} /{" "}
                   {totalPages}
                 </span>
 
-                {/* NEXT */}
                 <button
                   disabled={
                     currentPage === totalPages
@@ -612,14 +612,7 @@ const Shop = () => {
                       prev => prev + 1
                     )
                   }
-                  className={`
-                    px-5 py-2 rounded-xl font-semibold transition
-                    ${
-                      currentPage === totalPages
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-blue-500 hover:bg-blue-600 text-white"
-                    }
-                  `}
+                  className="bg-blue-500 text-white px-5 py-2 rounded-xl disabled:bg-gray-300"
                 >
                   Tiếp →
                 </button>
@@ -634,84 +627,9 @@ const Shop = () => {
 
       </div>
 
-      {/* ================= FOOTER ================= */}
-      <footer className="bg-gray-900 text-gray-300 mt-10">
-
-        <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-8">
-
-          <div>
-
-            <h2 className="text-2xl font-bold text-white mb-4">
-              SHOP
-            </h2>
-
-            <p className="text-sm leading-6">
-              Website bán quần áo thời trang hiện đại,
-              hỗ trợ nhiều biến thể sản phẩm như size,
-              màu sắc và quản lý tồn kho.
-            </p>
-
-          </div>
-
-          <div>
-
-            <h3 className="text-xl font-semibold text-white mb-4">
-              Liên kết
-            </h3>
-
-            <ul className="space-y-2">
-
-              <li>
-                <Link
-                  to="/"
-                  className="hover:text-white transition"
-                >
-                  Trang chủ
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  to="/favorites"
-                  className="hover:text-white transition"
-                >
-                  Yêu thích
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  to="/cart"
-                  className="hover:text-white transition"
-                >
-                  Giỏ hàng
-                </Link>
-              </li>
-
-            </ul>
-
-          </div>
-
-          <div>
-
-            <h3 className="text-xl font-semibold text-white mb-4">
-              Liên hệ
-            </h3>
-
-            <p>Email: shop@gmail.com</p>
-
-            <p>SĐT: 0123 456 789</p>
-
-            <p>Địa chỉ: Việt Nam</p>
-
-          </div>
-
-        </div>
-
-        <div className="border-t border-gray-700 py-4 text-center text-sm">
-          © 2026 SHOP. All rights reserved.
-        </div>
-
+      {/* FOOTER */}
+      <footer className="bg-gray-900 text-gray-300 mt-10 py-6 text-center">
+        © 2026 SHOP. All rights reserved.
       </footer>
 
     </div>
