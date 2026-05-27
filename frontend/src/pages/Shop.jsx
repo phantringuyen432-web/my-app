@@ -86,13 +86,29 @@ const Shop = () => {
         }
       }
     )
-      .then(res => res.json())
+      .then(async res => {
+
+        const data =
+          await res.json();
+
+        if (!res.ok) {
+
+          throw new Error(
+            data.message ||
+            "Lỗi tải yêu thích"
+          );
+
+        }
+
+        return data;
+
+      })
 
       .then(data => {
 
-        // lấy id sản phẩm
+        // lấy product_id
         const ids = data.map(
-          item => item.id
+          item => item.product_id
         );
 
         setFavorites(ids);
@@ -209,7 +225,7 @@ const Shop = () => {
 
     localStorage.removeItem("token");
 
-    window.location.reload();
+    window.location.href = "/";
 
   };
 
@@ -232,41 +248,46 @@ const Shop = () => {
 
     try {
 
-      // =========================
-      // REMOVE FAVORITE
-      // =========================
+      const res = await fetch(
+        "https://my-app-ne36.onrender.com/api/favorite",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${token}`
+          },
+
+          body: JSON.stringify({
+            product_id: productId
+          })
+        }
+      );
+
+      const data =
+        await res.json();
+
+      if (!res.ok) {
+
+        toast.error(
+          data.message ||
+          "Lỗi yêu thích"
+        );
+
+        return;
+
+      }
+
+      // backend toggle
       if (
         favorites.includes(productId)
       ) {
 
-        const res = await fetch(
-          `https://my-app-ne36.onrender.com/api/favorite/${productId}`,
-          {
-            method: "DELETE",
-
-            headers: {
-              Authorization:
-                `Bearer ${token}`
-            }
-          }
-        );
-
-        const data =
-          await res.json();
-
-        if (!res.ok) {
-
-          toast.error(
-            data.message ||
-            "Lỗi bỏ yêu thích"
-          );
-
-          return;
-
-        }
-
-        setFavorites(
-          favorites.filter(
+        setFavorites(prev =>
+          prev.filter(
             id => id !== productId
           )
         );
@@ -275,48 +296,10 @@ const Shop = () => {
           "Đã bỏ yêu thích"
         );
 
-      }
+      } else {
 
-      // =========================
-      // ADD FAVORITE
-      // =========================
-      else {
-
-        const res = await fetch(
-          "https://my-app-ne36.onrender.com/api/favorite/add",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-
-              Authorization:
-                `Bearer ${token}`
-            },
-
-            body: JSON.stringify({
-              product_id: productId
-            })
-          }
-        );
-
-        const data =
-          await res.json();
-
-        if (!res.ok) {
-
-          toast.error(
-            data.message ||
-            "Lỗi yêu thích"
-          );
-
-          return;
-
-        }
-
-        setFavorites([
-          ...favorites,
+        setFavorites(prev => [
+          ...prev,
           productId
         ]);
 
@@ -489,13 +472,39 @@ const Shop = () => {
         {/* ================= LOADING ================= */}
         {loading ? (
 
-          <div className="text-center py-20 text-xl">
-            Đang tải sản phẩm...
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+
+            {[...Array(6)].map(
+              (_, index) => (
+
+                <div
+                  key={index}
+                  className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse"
+                >
+
+                  <div className="h-56 bg-gray-300"></div>
+
+                  <div className="p-4">
+
+                    <div className="h-6 bg-gray-300 rounded mb-4"></div>
+
+                    <div className="h-6 w-1/2 bg-gray-300 rounded mb-6"></div>
+
+                    <div className="h-12 bg-gray-300 rounded-xl"></div>
+
+                  </div>
+
+                </div>
+
+              )
+            )}
+
           </div>
 
         ) : (
 
           <>
+
             {/* PRODUCTS */}
             {products.length === 0 ? (
 
