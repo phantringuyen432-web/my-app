@@ -18,7 +18,7 @@ import EditProduct from "./pages/EditProduct";
 import ProductList from "./pages/ProductList";
 import Dashboard from "./pages/Dashboard";
 import ProductDetail from "./pages/ProductDetail";
-import FavoritePage from "./pages/FavoritePage";
+import Favorite from "./pages/Favorite";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/AdminLayout";
 
